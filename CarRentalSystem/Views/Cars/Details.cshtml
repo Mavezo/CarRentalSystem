@@ -1,0 +1,467 @@
+@model CarRentalSystem.Entities.Vehicles.Car
+
+@{
+    ViewData["Title"] = "Car Details";
+    var totalRentals = Model.Rentals?.Count() ?? 0;
+    var totalRepairs = Model.Repairs?.Count() ?? 0;
+    var totalRepairCost = Model.Repairs?.Sum(r => r.Cost) ?? 0;
+    var hasInsurance = Model.Insurance != null;
+
+    var statusClass = Model.AvailabilityStatus switch
+    {
+        CarRentalSystem.Entities.Vehicles.CarAvailability.Available => "success",
+        CarRentalSystem.Entities.Vehicles.CarAvailability.Rented => "danger",
+        CarRentalSystem.Entities.Vehicles.CarAvailability.Reserved => "warning",
+        CarRentalSystem.Entities.Vehicles.CarAvailability.Maintenance => "secondary",
+        _ => "info"
+    };
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-car text-primary"></i> Car Details
+            </h1>
+            <p class="text-muted">Complete vehicle information and history</p>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit Car
+        </a>
+        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Delete Car
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Car Info Card -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Vehicle Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Car Image Placeholder -->
+                    <div class="text-center mb-4">
+                        <div class="bg-gradient rounded" style="height: 150px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div class="d-flex align-items-center justify-content-center h-100">
+                                <i class="fas fa-car fa-5x text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-4">
+                        <h4 class="mb-1">
+                            @if (Model.Model?.Brand != null)
+                            {
+                                @Model.Model.Brand.BrandName @Model.Model.ModelName
+                            }
+                            else
+                            {
+                                <span>Unknown Model</span>
+                            }
+                        </h4>
+                        <p class="text-muted">Car ID: #@Model.Id</p>
+                        <span class="badge bg-@statusClass fs-6">
+                            @Model.AvailabilityStatus
+                        </span>
+                    </div>
+
+                    <hr />
+
+                    <dl class="row mb-0">
+                        <dt class="col-sm-6">
+                            <i class="fas fa-id-card text-primary"></i> Registration
+                        </dt>
+                        <dd class="col-sm-6">
+                            <span class="badge bg-secondary">@Model.RegistrationNumber</span>
+                        </dd>
+
+                        <dt class="col-sm-6">
+                            <i class="fas fa-tachometer-alt text-primary"></i> Mileage
+                        </dt>
+                        <dd class="col-sm-6">
+                            <strong>@Model.Mileage.ToString("N0") km</strong>
+                        </dd>
+
+                        <dt class="col-sm-6">
+                            <i class="fas fa-dollar-sign text-primary"></i> Daily Price
+                        </dt>
+                        <dd class="col-sm-6">
+                            <strong class="text-success">@Model.DailyPrice.ToString("C")</strong>
+                        </dd>
+
+                        @if (!string.IsNullOrEmpty(Model.Location))
+                        {
+                            <dt class="col-sm-6">
+                                <i class="fas fa-map-marker-alt text-primary"></i> Location
+                            </dt>
+                            <dd class="col-sm-6">
+                                @Model.Location
+                            </dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Card -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar"></i> Statistics Overview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3">
+                            <div class="border rounded p-3 h-100">
+                                <i class="fas fa-file-contract fa-2x text-primary mb-2"></i>
+                                <h3 class="mb-1">@totalRentals</h3>
+                                <p class="text-muted mb-0 small">Total Rentals</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="border rounded p-3 h-100">
+                                <i class="fas fa-tools fa-2x text-warning mb-2"></i>
+                                <h3 class="mb-1">@totalRepairs</h3>
+                                <p class="text-muted mb-0 small">Total Repairs</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="border rounded p-3 h-100">
+                                <i class="fas fa-dollar-sign fa-2x text-danger mb-2"></i>
+                                <h3 class="mb-1">@totalRepairCost.ToString("C0")</h3>
+                                <p class="text-muted mb-0 small">Repair Costs</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="border rounded p-3 h-100">
+                                @if (hasInsurance)
+                                {
+                                    <i class="fas fa-shield-alt fa-2x text-success mb-2"></i>
+                                    <h3 class="mb-1"><i class="fas fa-check"></i></h3>
+                                    <p class="text-muted mb-0 small">Insured</p>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-shield-alt fa-2x text-secondary mb-2"></i>
+                                    <h3 class="mb-1"><i class="fas fa-times"></i></h3>
+                                    <p class="text-muted mb-0 small">No Insurance</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabbed Content -->
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="carTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">
+                        <i class="fas fa-info-circle"></i> General Info
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="insurance-tab" data-bs-toggle="tab" data-bs-target="#insurance" type="button" role="tab">
+                        <i class="fas fa-shield-alt"></i> Insurance
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="repairs-tab" data-bs-toggle="tab" data-bs-target="#repairs" type="button" role="tab">
+                        <i class="fas fa-tools"></i> Repairs (@totalRepairs)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="rentals-tab" data-bs-toggle="tab" data-bs-target="#rentals" type="button" role="tab">
+                        <i class="fas fa-file-contract"></i> Rentals (@totalRentals)
+                    </button>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content" id="carTabsContent">
+                <!-- General Info Tab -->
+                <div class="tab-pane fade show active" id="info" role="tabpanel">
+                    <h5 class="mb-3"><i class="fas fa-car"></i> Vehicle Details</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th width="40%"><i class="fas fa-trademark text-primary"></i> Brand:</th>
+                                    <td>@(Model.Model?.Brand?.BrandName ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <th><i class="fas fa-list text-primary"></i> Model:</th>
+                                    <td>@(Model.Model?.ModelName ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <th><i class="fas fa-id-card text-primary"></i> Registration:</th>
+                                    <td><span class="badge bg-secondary">@Model.RegistrationNumber</span></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th width="40%"><i class="fas fa-tachometer-alt text-primary"></i> Mileage:</th>
+                                    <td>@Model.Mileage.ToString("N0") km</td>
+                                </tr>
+                                <tr>
+                                    <th><i class="fas fa-dollar-sign text-primary"></i> Daily Rate:</th>
+                                    <td><strong class="text-success">@Model.DailyPrice.ToString("C")</strong></td>
+                                </tr>
+                                <tr>
+                                    <th><i class="fas fa-map-marker-alt text-primary"></i> Location:</th>
+                                    <td>@(Model.Location ?? "Not specified")</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    @if (Model.Model?.Brand != null)
+                    {
+                        <hr />
+                        <h5 class="mb-3"><i class="fas fa-info-circle"></i> Brand Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th width="40%"><i class="fas fa-globe text-primary"></i> Country:</th>
+                                        <td>@(Model.Model.Brand.Country ?? "N/A")</td>
+                                    </tr>
+                                    <tr>
+                                        <th><i class="fas fa-car-side text-primary"></i> Body Type:</th>
+                                        <td>@(Model.Model.Brand.BodyType ?? "N/A")</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th width="40%"><i class="fas fa-calendar text-primary"></i> Year:</th>
+                                        <td>@Model.Model.Brand.Year</td>
+                                    </tr>
+                                    <tr>
+                                        <th><i class="fas fa-cogs text-primary"></i> Transmission:</th>
+                                        <td>@(Model.Model.Brand.Transmission ?? "N/A")</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Insurance Tab -->
+                <div class="tab-pane fade" id="insurance" role="tabpanel">
+                    <h5 class="mb-3"><i class="fas fa-shield-alt"></i> Insurance Information</h5>
+                    @if (Model.Insurance != null)
+                    {
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th width="40%"><i class="fas fa-building text-primary"></i> Company:</th>
+                                        <td><strong>@Model.Insurance.Company</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <th><i class="fas fa-file-contract text-primary"></i> Policy Number:</th>
+                                        <td><span class="badge bg-info">@Model.Insurance.PolicyNumber</span></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th width="40%"><i class="fas fa-calendar-alt text-primary"></i> Start Date:</th>
+                                        <td>@Model.Insurance.StartDate.ToString("dd/MM/yyyy")</td>
+                                    </tr>
+                                    <tr>
+                                        <th><i class="fas fa-calendar-check text-primary"></i> End Date:</th>
+                                        <td>
+                                            @Model.Insurance.EndDate.ToString("dd/MM/yyyy")
+                                            @if (Model.Insurance.EndDate < DateTime.Now)
+                                            {
+                                                <span class="badge bg-danger">Expired</span>
+                                            }
+                                            else if (Model.Insurance.EndDate < DateTime.Now.AddDays(30))
+                                            {
+                                                <span class="badge bg-warning">Expiring Soon</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">Active</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning" role="alert">
+                            <h5 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> No Insurance</h5>
+                            <p class="mb-0">This vehicle does not have active insurance. Please add insurance coverage.</p>
+                        </div>
+                    }
+                </div>
+
+                <!-- Repairs Tab -->
+                <div class="tab-pane fade" id="repairs" role="tabpanel">
+                    <h5 class="mb-3"><i class="fas fa-tools"></i> Repair History</h5>
+                    @if (Model.Repairs != null && Model.Repairs.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th><i class="fas fa-hashtag"></i> ID</th>
+                                        <th><i class="fas fa-calendar"></i> Date</th>
+                                        <th><i class="fas fa-building"></i> Service Center</th>
+                                        <th><i class="fas fa-dollar-sign"></i> Cost</th>
+                                        <th><i class="fas fa-comment"></i> Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var repair in Model.Repairs.OrderByDescending(r => r.RepairDate))
+                                    {
+                                        <tr>
+                                            <td><span class="badge bg-secondary">#@repair.Id</span></td>
+                                            <td>@repair.RepairDate.ToString("dd/MM/yyyy")</td>
+                                            <td>@(repair.ServiceCenter?.Name ?? "N/A")</td>
+                                            <td><strong class="text-danger">@repair.Cost.ToString("C")</strong></td>
+                                            <td>@(repair.Description ?? "No description")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-light">
+                                        <td colspan="3" class="text-end"><strong>Total Repair Cost:</strong></td>
+                                        <td colspan="2"><strong class="text-danger">@totalRepairCost.ToString("C")</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info" role="alert">
+                            <h5 class="alert-heading"><i class="fas fa-info-circle"></i> No Repairs</h5>
+                            <p class="mb-0">This vehicle has no repair history.</p>
+                        </div>
+                    }
+                </div>
+
+                <!-- Rentals Tab -->
+                <div class="tab-pane fade" id="rentals" role="tabpanel">
+                    <h5 class="mb-3"><i class="fas fa-file-contract"></i> Rental History</h5>
+                    @if (Model.Rentals != null && Model.Rentals.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th><i class="fas fa-hashtag"></i> ID</th>
+                                        <th><i class="fas fa-user"></i> Client</th>
+                                        <th><i class="fas fa-user-tie"></i> Employee</th>
+                                        <th><i class="fas fa-calendar"></i> Rental Date</th>
+                                        <th><i class="fas fa-calendar-check"></i> Return Date</th>
+                                        <th><i class="fas fa-info-circle"></i> Status</th>
+                                        <th><i class="fas fa-dollar-sign"></i> Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var rental in Model.Rentals.OrderByDescending(r => r.RentalDate))
+                                    {
+                                        var totalPayment = rental.Payments?.Sum(p => p.Amount) ?? 0;
+                                        <tr>
+                                            <td><span class="badge bg-secondary">#@rental.Id</span></td>
+                                            <td>
+                                                @if (rental.Client != null)
+                                                {
+                                                    @rental.Client.FirstName @rental.Client.LastName
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">N/A</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (rental.Employee != null)
+                                                {
+                                                    @rental.Employee.FirstName @rental.Employee.LastName
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">N/A</span>
+                                                }
+                                            </td>
+                                            <td>@rental.RentalDate.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                @if (rental.ReturnDate.HasValue)
+                                                {
+                                                    @rental.ReturnDate.Value.ToString("dd/MM/yyyy")
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Not returned</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @switch (rental.Status)
+                                                {
+                                                    case CarRentalSystem.Entities.Rentals.RentalStatus.Active:
+                                                        <span class="badge bg-warning">Active</span>
+                                                        break;
+                                                    case CarRentalSystem.Entities.Rentals.RentalStatus.Completed:
+                                                        <span class="badge bg-success">Completed</span>
+                                                        break;
+                                                    case CarRentalSystem.Entities.Rentals.RentalStatus.Reserved:
+                                                        <span class="badge bg-info">Reserved</span>
+                                                        break;
+                                                    case CarRentalSystem.Entities.Rentals.RentalStatus.Cancelled:
+                                                        <span class="badge bg-secondary">Cancelled</span>
+                                                        break;
+                                                    case CarRentalSystem.Entities.Rentals.RentalStatus.Overdue:
+                                                        <span class="badge bg-danger">Overdue</span>
+                                                        break;
+                                                    default:
+                                                        <span class="badge bg-light text-dark">@rental.Status</span>
+                                                        break;
+                                                }
+                                            </td>
+                                            <td><strong class="text-success">@totalPayment.ToString("C")</strong></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info" role="alert">
+                            <h5 class="alert-heading"><i class="fas fa-info-circle"></i> No Rentals</h5>
+                            <p class="mb-0">This vehicle has not been rented yet.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

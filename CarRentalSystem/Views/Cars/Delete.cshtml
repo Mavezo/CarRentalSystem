@@ -1,0 +1,237 @@
+@model CarRentalSystem.Entities.Vehicles.Car
+
+@{
+    ViewData["Title"] = "Delete Car";
+    var rentalCount = Model.Rentals?.Count() ?? 0;
+    var repairCount = Model.Repairs?.Count() ?? 0;
+    var hasInsurance = Model.Insurance != null;
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-car-crash text-danger"></i> Delete Car
+            </h1>
+            <p class="text-muted">Confirm car deletion</p>
+        </div>
+    </div>
+
+    <!-- Warning Alert -->
+    <div class="alert alert-danger" role="alert">
+        <h5 class="alert-heading">
+            <i class="fas fa-exclamation-triangle"></i> Warning!
+        </h5>
+        <p class="mb-0">You are about to delete this car from the system. This action cannot be undone.</p>
+    </div>
+
+    <!-- Error Message if Car has Rentals -->
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-car"></i> Car Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-hashtag"></i> Car ID
+                            </h6>
+                            <p class="fs-5"><span class="badge bg-secondary">#@Model.Id</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-id-card"></i> Registration Number
+                            </h6>
+                            <p class="fs-5"><strong>@Model.RegistrationNumber</strong></p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-car"></i> Vehicle
+                            </h6>
+                            <p class="fs-6">
+                                @if (Model.Model?.Brand != null)
+                                {
+                                    <strong>@Model.Model.Brand.BrandName @Model.Model.ModelName</strong>
+                                }
+                                else
+                                {
+                                    <span>Unknown Model</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-info-circle"></i> Status
+                            </h6>
+                            <p class="fs-6">
+                                @switch (Model.AvailabilityStatus)
+                                {
+                                    case CarRentalSystem.Entities.Vehicles.CarAvailability.Available:
+                                        <span class="badge bg-success">Available</span>
+                                        break;
+                                    case CarRentalSystem.Entities.Vehicles.CarAvailability.Rented:
+                                        <span class="badge bg-danger">Rented</span>
+                                        break;
+                                    case CarRentalSystem.Entities.Vehicles.CarAvailability.Reserved:
+                                        <span class="badge bg-warning">Reserved</span>
+                                        break;
+                                    case CarRentalSystem.Entities.Vehicles.CarAvailability.Maintenance:
+                                        <span class="badge bg-secondary">Maintenance</span>
+                                        break;
+                                }
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-tachometer-alt"></i> Mileage
+                            </h6>
+                            <p class="fs-6">@Model.Mileage.ToString("N0") km</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-dollar-sign"></i> Daily Price
+                            </h6>
+                            <p class="fs-6"><strong class="text-success">@Model.DailyPrice.ToString("C")</strong></p>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Location))
+                    {
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-2">
+                                    <i class="fas fa-map-marker-alt"></i> Location
+                                </h6>
+                                <p class="fs-6">@Model.Location</p>
+                            </div>
+                        </div>
+                    }
+
+                    <hr />
+
+                    <!-- Related Data Statistics -->
+                    <h6 class="text-muted mb-3">
+                        <i class="fas fa-database"></i> Related Data
+                    </h6>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="border rounded p-2 text-center">
+                                <i class="fas fa-file-contract fa-2x text-primary mb-2"></i>
+                                <h5 class="mb-1">@rentalCount</h5>
+                                <small class="text-muted">Rentals</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-2 text-center">
+                                <i class="fas fa-tools fa-2x text-warning mb-2"></i>
+                                <h5 class="mb-1">@repairCount</h5>
+                                <small class="text-muted">Repairs</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-2 text-center">
+                                @if (hasInsurance)
+                                {
+                                    <i class="fas fa-shield-alt fa-2x text-success mb-2"></i>
+                                    <h5 class="mb-1"><i class="fas fa-check"></i></h5>
+                                    <small class="text-muted">Insurance</small>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-shield-alt fa-2x text-secondary mb-2"></i>
+                                    <h5 class="mb-1"><i class="fas fa-times"></i></h5>
+                                    <small class="text-muted">No Insurance</small>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    @if (rentalCount > 0)
+                    {
+                        <!-- Cannot Delete - Has Rentals -->
+                        <div class="alert alert-warning" role="alert">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-ban"></i> Cannot Delete Car
+                            </h6>
+                            <p class="mb-0">
+                                This car has <strong>@rentalCount rental(s)</strong> in the system and cannot be deleted. 
+                                Car records with rental history must be retained for data integrity and audit purposes.
+                            </p>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to List
+                            </a>
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-info">
+                                <i class="fas fa-eye"></i> View Details
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Can Delete - No Rentals -->
+                        <div class="alert alert-info" role="alert">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-info-circle"></i> Deletion Information
+                            </h6>
+                            <p class="mb-0">
+                                This car has no rental history and can be deleted. 
+                                @if (hasInsurance)
+                                {
+                                    <strong>Note:</strong> <span>The associated insurance record will also be deleted.</span>
+                                }
+                                @if (repairCount > 0)
+                                {
+                                    <strong>Note:</strong> <span>All @repairCount repair record(s) will also be deleted.</span>
+                                }
+                            </p>
+                        </div>
+
+                        <form asp-action="Delete" method="post">
+                            <input type="hidden" asp-for="Id" />
+                            
+                            <div class="d-flex justify-content-between">
+                                <a asp-action="Index" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Cancel
+                                </a>
+                                <div>
+                                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-info me-2">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </a>
+                                    <button type="submit" 
+                                            class="btn btn-danger" 
+                                            onclick="return confirm('Are you absolutely sure you want to delete @Model.RegistrationNumber? This action cannot be undone.');">
+                                        <i class="fas fa-trash"></i> Confirm Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

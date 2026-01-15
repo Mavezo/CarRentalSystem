@@ -1,0 +1,294 @@
+@model CarRentalSystem.Entities.Users.Employee
+
+@{
+    ViewData["Title"] = "Employee Details";
+    var totalRentals = Model.Rentals?.Count() ?? 0;
+    var completedRentals = Model.Rentals?.Count(r => r.Status == CarRentalSystem.Entities.Rentals.RentalStatus.Completed) ?? 0;
+    var activeRentals = Model.Rentals?.Count(r => r.Status == CarRentalSystem.Entities.Rentals.RentalStatus.Active) ?? 0;
+    var totalRevenue = Model.Rentals?.SelectMany(r => r.Payments ?? new List<CarRentalSystem.Entities.Rentals.Payment>()).Sum(p => p.Amount) ?? 0;
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-user-tie text-primary"></i> Employee Profile
+            </h1>
+            <p class="text-muted">Detailed information and rental processing history</p>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit Employee
+        </a>
+        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Delete Employee
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Employee Information Card -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-id-card"></i> Personal Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
+                             style="width: 100px; height: 100px; font-size: 3rem;">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <h4 class="mt-3 mb-1">@Model.FirstName @Model.LastName</h4>
+                        <p class="text-muted">Employee ID: #@Model.Id</p>
+                    </div>
+
+                    <hr />
+
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">
+                            <i class="fas fa-briefcase text-primary"></i> Position
+                        </dt>
+                        <dd class="col-sm-7">
+                            <span class="badge bg-info">@Model.Position</span>
+                        </dd>
+
+                        <dt class="col-sm-5">
+                            <i class="fas fa-phone text-primary"></i> Phone
+                        </dt>
+                        <dd class="col-sm-7">
+                            <a href="tel:@Model.Phone">@Model.Phone</a>
+                        </dd>
+
+                        <dt class="col-sm-5">
+                            <i class="fas fa-calendar text-primary"></i> Hire Date
+                        </dt>
+                        <dd class="col-sm-7">
+                            @Model.HireDate.ToString("dd/MM/yyyy")
+                        </dd>
+
+                        <dt class="col-sm-5">
+                            <i class="fas fa-clock text-primary"></i> Experience
+                        </dt>
+                        <dd class="col-sm-7">
+                            @{
+                                var experience = DateTime.Now.Subtract(Model.HireDate);
+                                var years = (int)(experience.Days / 365.25);
+                                var months = (int)((experience.Days % 365.25) / 30.44);
+                            }
+                            <span class="badge bg-success">
+                                @if (years > 0)
+                                {
+                                    @years @(years == 1 ? "year" : "years")
+                                }
+                                @if (months > 0)
+                                {
+                                    @months @(months == 1 ? "month" : "months")
+                                }
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-5">
+                            <i class="fas fa-dollar-sign text-primary"></i> Salary
+                        </dt>
+                        <dd class="col-sm-7">
+                            <strong class="text-success">@Model.Salary.ToString("C")</strong>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Statistics -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line"></i> Performance Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3">
+                            <div class="border rounded p-3 h-100">
+                                <i class="fas fa-tasks fa-2x text-primary mb-2"></i>
+                                <h3 class="mb-1">@totalRentals</h3>
+                                <p class="text-muted mb-0 small">Total Rentals Processed</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="border rounded p-3 h-100">
+                                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                <h3 class="mb-1">@completedRentals</h3>
+                                <p class="text-muted mb-0 small">Completed Rentals</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="border rounded p-3 h-100">
+                                <i class="fas fa-spinner fa-2x text-warning mb-2"></i>
+                                <h3 class="mb-1">@activeRentals</h3>
+                                <p class="text-muted mb-0 small">Active Rentals</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="border rounded p-3 h-100">
+                                <i class="fas fa-dollar-sign fa-2x text-info mb-2"></i>
+                                <h3 class="mb-1">@totalRevenue.ToString("C0")</h3>
+                                <p class="text-muted mb-0 small">Total Revenue</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (totalRentals > 0)
+                    {
+                        <hr />
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">
+                                    <i class="fas fa-percent"></i> Completion Rate
+                                </h6>
+                                <div class="progress" style="height: 25px;">
+                                    @{
+                                        var completionRate = totalRentals > 0 ? (completedRentals * 100.0 / totalRentals) : 0;
+                                    }
+                                    <div class="progress-bar bg-success" 
+                                         role="progressbar" 
+                                         style="width: @completionRate%" 
+                                         aria-valuenow="@completionRate" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        @completionRate.ToString("F1")%
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">
+                                    <i class="fas fa-chart-bar"></i> Average per Rental
+                                </h6>
+                                <h4 class="text-primary">
+                                    @((totalRevenue / totalRentals).ToString("C"))
+                                </h4>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rental History -->
+    @if (Model.Rentals != null && Model.Rentals.Any())
+    {
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-history"></i> Rental Processing History
+                    <span class="badge bg-light text-dark float-end">@Model.Rentals.Count() Records</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th><i class="fas fa-hashtag"></i> Rental ID</th>
+                                <th><i class="fas fa-car"></i> Vehicle</th>
+                                <th><i class="fas fa-user"></i> Client</th>
+                                <th><i class="fas fa-calendar"></i> Rental Date</th>
+                                <th><i class="fas fa-calendar-check"></i> Return Date</th>
+                                <th><i class="fas fa-info-circle"></i> Status</th>
+                                <th><i class="fas fa-dollar-sign"></i> Total Payment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var rental in Model.Rentals.OrderByDescending(r => r.RentalDate))
+                            {
+                                var totalPayment = rental.Payments?.Sum(p => p.Amount) ?? 0;
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-secondary">#@rental.Id</span>
+                                    </td>
+                                    <td>
+                                        @if (rental.Car?.Model?.Brand != null)
+                                        {
+                                            <strong>@rental.Car.Model.Brand.BrandName @rental.Car.Model.ModelName</strong><br />
+                                            <small class="text-muted">@rental.Car.RegistrationNumber</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (rental.Client != null)
+                                        {
+                                            <span>@rental.Client.FirstName @rental.Client.LastName</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </td>
+                                    <td>@rental.RentalDate.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        @if (rental.ReturnDate.HasValue)
+                                        {
+                                            @rental.ReturnDate.Value.ToString("dd/MM/yyyy")
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Not returned</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @switch (rental.Status)
+                                        {
+                                            case CarRentalSystem.Entities.Rentals.RentalStatus.Active:
+                                                <span class="badge bg-warning">Active</span>
+                                                break;
+                                            case CarRentalSystem.Entities.Rentals.RentalStatus.Completed:
+                                                <span class="badge bg-success">Completed</span>
+                                                break;
+                                            case CarRentalSystem.Entities.Rentals.RentalStatus.Reserved:
+                                                <span class="badge bg-info">Reserved</span>
+                                                break;
+                                            case CarRentalSystem.Entities.Rentals.RentalStatus.Cancelled:
+                                                <span class="badge bg-secondary">Cancelled</span>
+                                                break;
+                                            case CarRentalSystem.Entities.Rentals.RentalStatus.Overdue:
+                                                <span class="badge bg-danger">Overdue</span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-light text-dark">@rental.Status</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>
+                                        <strong class="text-success">@totalPayment.ToString("C")</strong>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="alert">
+            <h5 class="alert-heading">
+                <i class="fas fa-info-circle"></i> No Rental History
+            </h5>
+            <p class="mb-0">This employee has not processed any rentals yet.</p>
+        </div>
+    }
+</div>

@@ -1,0 +1,139 @@
+@model CarRentalSystem.Entities.Vehicles.Brand
+
+@{
+    ViewData["Title"] = "Create Brand";
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-plus-circle text-primary"></i> Create New Brand
+            </h1>
+            <p class="text-muted">Add a new car brand to the system</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-trademark"></i> Brand Information
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="BrandName" class="form-label">
+                                <i class="fas fa-trademark"></i> Brand Name <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="BrandName" class="form-control" placeholder="Enter brand name (e.g., Toyota, BMW)" />
+                            <span asp-validation-for="BrandName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Country" class="form-label">
+                                <i class="fas fa-globe"></i> Country
+                            </label>
+                            <input asp-for="Country" class="form-control" placeholder="Enter country of origin (e.g., Japan, Germany)" />
+                            <span asp-validation-for="Country" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="BodyType" class="form-label">
+                                <i class="fas fa-car-side"></i> Body Type
+                            </label>
+                            <select asp-for="BodyType" class="form-select">
+                                <option value="">Select body type...</option>
+                                <option value="Sedan">Sedan</option>
+                                <option value="SUV">SUV</option>
+                                <option value="Hatchback">Hatchback</option>
+                                <option value="Coupe">Coupe</option>
+                                <option value="Convertible">Convertible</option>
+                                <option value="Wagon">Wagon</option>
+                                <option value="Minivan">Minivan</option>
+                                <option value="Pickup">Pickup</option>
+                                <option value="Sports">Sports</option>
+                            </select>
+                            <span asp-validation-for="BodyType" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Year" class="form-label">
+                                <i class="fas fa-calendar"></i> Year
+                            </label>
+                            <input asp-for="Year" class="form-control" type="number" min="2000" max="2025" placeholder="Enter year (2000-2025)" />
+                            <span asp-validation-for="Year" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Transmission" class="form-label">
+                                <i class="fas fa-cog"></i> Transmission
+                            </label>
+                            <select asp-for="Transmission" class="form-select">
+                                <option value="">Select transmission...</option>
+                                <option value="Manual">Manual</option>
+                                <option value="Automatic">Automatic</option>
+                                <option value="Semi-Automatic">Semi-Automatic</option>
+                                <option value="CVT">CVT (Continuously Variable)</option>
+                            </select>
+                            <span asp-validation-for="Transmission" class="text-danger"></span>
+                        </div>
+
+                        <hr />
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Create Brand
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Section -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        <strong>Required fields:</strong>
+                    </p>
+                    <ul>
+                        <li>Brand Name (max 50 characters)</li>
+                    </ul>
+                    <p class="card-text">
+                        <strong>Optional fields:</strong>
+                    </p>
+                    <ul>
+                        <li>Country of origin</li>
+                        <li>Body Type</li>
+                        <li>Year (2000-2025)</li>
+                        <li>Transmission type</li>
+                    </ul>
+                    <hr />
+                    <p class="card-text">
+                        <i class="fas fa-lightbulb text-warning"></i> 
+                        <strong>Tip:</strong> After creating a brand, you can add models associated with it.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

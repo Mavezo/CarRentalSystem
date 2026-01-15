@@ -1,0 +1,242 @@
+@model IEnumerable<CarRentalSystem.Entities.Vehicles.Brand>
+
+@{
+    ViewData["Title"] = "Brands";
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-trademark text-primary"></i> Brands Management
+            </h1>
+            <p class="text-muted">Manage car brands and manufacturers</p>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Action Bar -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New Brand
+            </a>
+        </div>
+        <div class="col-md-6 text-end">
+            <span class="badge bg-info fs-6">
+                <i class="fas fa-trademark"></i> Total Brands: @Model.Count()
+            </span>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-filter"></i> Filters
+            </h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="Index" method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="searchString" class="form-label">
+                        <i class="fas fa-search"></i> Search
+                    </label>
+                    <input type="text" 
+                           name="searchString" 
+                           value="@ViewData["CurrentFilter"]" 
+                           class="form-control" 
+                           placeholder="Brand name or country..." />
+                </div>
+
+                <div class="col-md-3">
+                    <label for="country" class="form-label">
+                        <i class="fas fa-globe"></i> Country
+                    </label>
+                    <select name="country" class="form-select">
+                        <option value="">All Countries</option>
+                        @if (ViewBag.Countries != null)
+                        {
+                            @foreach (var country in ViewBag.Countries)
+                            {
+                                <option value="@country" selected="@(ViewData["Country"]?.ToString() == country)">@country</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="bodyType" class="form-label">
+                        <i class="fas fa-car-side"></i> Body Type
+                    </label>
+                    <select name="bodyType" class="form-select">
+                        <option value="">All Types</option>
+                        @if (ViewBag.BodyTypes != null)
+                        {
+                            @foreach (var bodyType in ViewBag.BodyTypes)
+                            {
+                                <option value="@bodyType" selected="@(ViewData["BodyType"]?.ToString() == bodyType)">@bodyType</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Apply
+                    </button>
+                </div>
+
+                <div class="col-12">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Clear Filters
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Brands Grid -->
+    @if (Model.Any())
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+            @foreach (var brand in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm brand-card">
+                        <!-- Brand Header -->
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-trademark"></i> @brand.BrandName
+                            </h5>
+                        </div>
+
+                        <div class="card-body">
+                            @if (!string.IsNullOrEmpty(brand.Country))
+                            {
+                                <p class="mb-2">
+                                    <i class="fas fa-globe text-primary"></i> 
+                                    <strong>Country:</strong> @brand.Country
+                                </p>
+                            }
+
+                            @if (!string.IsNullOrEmpty(brand.BodyType))
+                            {
+                                <p class="mb-2">
+                                    <i class="fas fa-car-side text-primary"></i> 
+                                    <strong>Body Type:</strong> @brand.BodyType
+                                </p>
+                            }
+
+                            @if (brand.Year > 0)
+                            {
+                                <p class="mb-2">
+                                    <i class="fas fa-calendar text-primary"></i> 
+                                    <strong>Year:</strong> @brand.Year
+                                </p>
+                            }
+
+                            @if (!string.IsNullOrEmpty(brand.Transmission))
+                            {
+                                <p class="mb-2">
+                                    <i class="fas fa-cog text-primary"></i> 
+                                    <strong>Transmission:</strong> @brand.Transmission
+                                </p>
+                            }
+
+                            <hr />
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-info">
+                                    <i class="fas fa-list"></i> 
+                                    @(brand.Models?.Count ?? 0) Model(s)
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-transparent border-top-0">
+                            <div class="d-grid gap-2">
+                                <a asp-action="Details" asp-route-id="@brand.Id" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i> View Details
+                                </a>
+                                <div class="btn-group" role="group">
+                                    <a asp-action="Edit" asp-route-id="@brand.Id" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@brand.Id" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading">
+                <i class="fas fa-info-circle"></i> No Brands Found
+            </h4>
+            @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()) || ViewData["Country"] != null || ViewData["BodyType"] != null)
+            {
+                <p>No brands match your search criteria. Try adjusting your filters or <a asp-action="Index" class="alert-link">clear the filters</a>.</p>
+            }
+            else
+            {
+                <p>There are no brands in the system yet. <a asp-action="Create" class="alert-link">Add your first brand</a> to get started.</p>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-dismiss alerts after 5 seconds
+        window.setTimeout(function() {
+            $(".alert").fadeTo(500, 0).slideUp(500, function(){
+                $(this).remove();
+            });
+        }, 5000);
+
+        // Add hover effect to brand cards
+        $(document).ready(function() {
+            $('.brand-card').hover(
+                function() {
+                    $(this).addClass('shadow-lg').css('transform', 'translateY(-5px)');
+                },
+                function() {
+                    $(this).removeClass('shadow-lg').css('transform', 'translateY(0)');
+                }
+            );
+
+            // Smooth transition
+            $('.brand-card').css('transition', 'all 0.3s ease');
+        });
+    </script>
+
+    <style>
+        .brand-card {
+            transition: all 0.3s ease;
+        }
+    </style>
+}

@@ -1,0 +1,168 @@
+@model CarRentalSystem.Entities.Users.Employee
+
+@{
+    ViewData["Title"] = "Delete Employee";
+    var rentalCount = Model.Rentals?.Count() ?? 0;
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-user-times text-danger"></i> Delete Employee
+            </h1>
+            <p class="text-muted">Confirm employee deletion</p>
+        </div>
+    </div>
+
+    <!-- Warning Alert -->
+    <div class="alert alert-danger" role="alert">
+        <h5 class="alert-heading">
+            <i class="fas fa-exclamation-triangle"></i> Warning!
+        </h5>
+        <p class="mb-0">You are about to delete this employee from the system. This action cannot be undone.</p>
+    </div>
+
+    <!-- Error Message if Employee has Rentals -->
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-tie"></i> Employee Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-hashtag"></i> Employee ID
+                            </h6>
+                            <p class="fs-5"><span class="badge bg-secondary">#@Model.Id</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-user"></i> Full Name
+                            </h6>
+                            <p class="fs-5"><strong>@Model.FirstName @Model.LastName</strong></p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-briefcase"></i> Position
+                            </h6>
+                            <p class="fs-6"><span class="badge bg-info">@Model.Position</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-phone"></i> Phone Number
+                            </h6>
+                            <p class="fs-6">@Model.Phone</p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-calendar"></i> Hire Date
+                            </h6>
+                            <p class="fs-6">@Model.HireDate.ToString("dd/MM/yyyy")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-dollar-sign"></i> Salary
+                            </h6>
+                            <p class="fs-6"><strong class="text-success">@Model.Salary.ToString("C")</strong></p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-tasks"></i> Rentals Processed
+                            </h6>
+                            <p class="fs-6">
+                                @if (rentalCount > 0)
+                                {
+                                    <span class="badge bg-warning text-dark">@rentalCount rental(s)</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">No rentals processed</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    @if (rentalCount > 0)
+                    {
+                        <!-- Cannot Delete - Has Rentals -->
+                        <div class="alert alert-warning" role="alert">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-ban"></i> Cannot Delete Employee
+                            </h6>
+                            <p class="mb-0">
+                                This employee has processed <strong>@rentalCount rental(s)</strong> and cannot be deleted. 
+                                Employee records with rental history must be retained for data integrity.
+                            </p>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to List
+                            </a>
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-info">
+                                <i class="fas fa-eye"></i> View Details
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Can Delete - No Rentals -->
+                        <div class="alert alert-info" role="alert">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-check-circle"></i> Safe to Delete
+                            </h6>
+                            <p class="mb-0">
+                                This employee has not processed any rentals and can be safely deleted from the system.
+                            </p>
+                        </div>
+
+                        <form asp-action="Delete" method="post">
+                            <input type="hidden" asp-for="Id" />
+                            
+                            <div class="d-flex justify-content-between">
+                                <a asp-action="Index" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Cancel
+                                </a>
+                                <div>
+                                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-info me-2">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </a>
+                                    <button type="submit" 
+                                            class="btn btn-danger" 
+                                            onclick="return confirm('Are you absolutely sure you want to delete @Model.FirstName @Model.LastName? This action cannot be undone.');">
+                                        <i class="fas fa-trash"></i> Confirm Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

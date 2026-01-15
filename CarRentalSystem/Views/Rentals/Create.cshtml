@@ -1,0 +1,288 @@
+@model CarRentalSystem.Entities.Rentals.Rental
+
+@{
+    ViewData["Title"] = "Create New Rental";
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-plus-circle text-success"></i> Create New Rental
+            </h1>
+            <p class="text-muted">Register a new vehicle rental transaction</p>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Rental Form -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-contract"></i> Rental Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post" id="rentalForm">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <!-- Section 1: Client Selection -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-primary border-bottom pb-2">
+                                <i class="fas fa-user"></i> 1. Client Information
+                            </h6>
+                            <div class="mb-3">
+                                <label asp-for="ClientId" class="form-label">Select Client *</label>
+                                <select asp-for="ClientId" asp-items="ViewBag.ClientId" 
+                                        class="form-select" id="clientSelect" required>
+                                    <option value="">-- Select a client --</option>
+                                </select>
+                                <span asp-validation-for="ClientId" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Choose the client who will rent the vehicle
+                                </small>
+                            </div>
+                            <div class="mb-0">
+                                <a asp-controller="Clients" asp-action="Create" class="btn btn-outline-primary btn-sm" target="_blank">
+                                    <i class="fas fa-user-plus"></i> Add New Client
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Section 2: Vehicle Selection -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-primary border-bottom pb-2">
+                                <i class="fas fa-car"></i> 2. Vehicle Selection
+                            </h6>
+                            <div class="mb-3">
+                                <label asp-for="CarId" class="form-label">Select Vehicle *</label>
+                                <select asp-for="CarId" asp-items="ViewBag.CarId" 
+                                        class="form-select" id="carSelect" required>
+                                    <option value="">-- Select a vehicle --</option>
+                                </select>
+                                <span asp-validation-for="CarId" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Only available vehicles are shown
+                                </small>
+                            </div>
+                            <div id="carPriceInfo" class="alert alert-info" style="display: none;">
+                                <strong>Daily Rate:</strong> <span id="dailyPrice"></span> PLN/day
+                            </div>
+                        </div>
+
+                        <!-- Section 3: Employee Selection -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-primary border-bottom pb-2">
+                                <i class="fas fa-user-tie"></i> 3. Employee Information
+                            </h6>
+                            <div class="mb-3">
+                                <label asp-for="EmployeeId" class="form-label">Assigned Employee *</label>
+                                <select asp-for="EmployeeId" asp-items="ViewBag.EmployeeId" 
+                                        class="form-select" required>
+                                    <option value="">-- Select an employee --</option>
+                                </select>
+                                <span asp-validation-for="EmployeeId" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Employee handling this rental
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Section 4: Rental Dates -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-primary border-bottom pb-2">
+                                <i class="fas fa-calendar"></i> 4. Rental Period
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="RentalDate" class="form-label">Rental Start Date *</label>
+                                        <input asp-for="RentalDate" type="date" class="form-control" 
+                                               id="rentalDate" required />
+                                        <span asp-validation-for="RentalDate" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="ReturnDate" class="form-label">Expected Return Date *</label>
+                                        <input asp-for="ReturnDate" type="date" class="form-control" 
+                                               id="returnDate" required />
+                                        <span asp-validation-for="ReturnDate" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="rentalDaysInfo" class="alert alert-success" style="display: none;">
+                                <strong>Rental Duration:</strong> <span id="rentalDays">0</span> day(s)
+                                <br />
+                                <strong>Estimated Total:</strong> <span id="estimatedTotal">0</span> PLN
+                            </div>
+                        </div>
+
+                        <!-- Section 5: Rental Status -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-primary border-bottom pb-2">
+                                <i class="fas fa-tag"></i> 5. Initial Status
+                            </h6>
+                            <div class="mb-3">
+                                <label asp-for="Status" class="form-label">Rental Status *</label>
+                                <select asp-for="Status" class="form-select" required>
+                                    <option value="Reserved">Reserved - Customer has reserved the vehicle</option>
+                                    <option value="Active">Active - Customer has picked up the vehicle</option>
+                                </select>
+                                <span asp-validation-for="Status" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> 
+                                    <strong>Reserved:</strong> Customer reserved, not yet picked up
+                                    <br />
+                                    <strong>Active:</strong> Customer already has the vehicle
+                                </small>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <!-- Form Actions -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-save"></i> Create Rental
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help & Guidelines -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-question-circle"></i> Rental Guidelines
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="fw-bold">Before Creating a Rental:</h6>
+                    <ul>
+                        <li>Verify client information and ID</li>
+                        <li>Check vehicle availability</li>
+                        <li>Inspect vehicle condition</li>
+                        <li>Confirm insurance coverage</li>
+                        <li>Collect required deposit</li>
+                    </ul>
+
+                    <h6 class="fw-bold mt-3">Required Documents:</h6>
+                    <ul class="mb-0">
+                        <li>Valid driver's license</li>
+                        <li>ID card or passport</li>
+                        <li>Proof of address</li>
+                        <li>Payment method</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Important Notes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li><strong>Status Selection:</strong>
+                            <ul>
+                                <li><strong>Reserved:</strong> Use when customer reserves in advance</li>
+                                <li><strong>Active:</strong> Use when customer picks up immediately</li>
+                            </ul>
+                        </li>
+                        <li><strong>Return Date:</strong> Must be after rental date</li>
+                        <li><strong>Vehicle Check:</strong> The system will verify vehicle availability</li>
+                        <li><strong>Overlapping Rentals:</strong> System prevents double-booking</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            // Store car prices
+            const carPrices = {};
+            
+            // Parse car prices from dropdown options
+            $('#carSelect option').each(function() {
+                const text = $(this).text();
+                const match = text.match(/(\d+(?:\.\d+)?)\s*PLN\/day/);
+                if (match) {
+                    carPrices[$(this).val()] = parseFloat(match[1]);
+                }
+            });
+
+            // Calculate and display rental information
+            function calculateRental() {
+                const carId = $('#carSelect').val();
+                const rentalDate = new Date($('#rentalDate').val());
+                const returnDate = new Date($('#returnDate').val());
+                
+                if (carId && rentalDate && returnDate && returnDate > rentalDate) {
+                    const dailyPrice = carPrices[carId] || 0;
+                    const days = Math.ceil((returnDate - rentalDate) / (1000 * 60 * 60 * 24));
+                    const total = dailyPrice * days;
+                    
+                    $('#dailyPrice').text(dailyPrice.toFixed(2));
+                    $('#carPriceInfo').show();
+                    
+                    $('#rentalDays').text(days);
+                    $('#estimatedTotal').text(total.toFixed(2));
+                    $('#rentalDaysInfo').show();
+                } else {
+                    $('#rentalDaysInfo').hide();
+                }
+            }
+
+            // Show car price when car is selected
+            $('#carSelect').change(function() {
+                const carId = $(this).val();
+                if (carId && carPrices[carId]) {
+                    $('#dailyPrice').text(carPrices[carId].toFixed(2));
+                    $('#carPriceInfo').show();
+                    calculateRental();
+                } else {
+                    $('#carPriceInfo').hide();
+                }
+            });
+
+            // Recalculate on date change
+            $('#rentalDate, #returnDate').change(calculateRental);
+
+            // Set minimum dates
+            const today = new Date().toISOString().split('T')[0];
+            $('#rentalDate').attr('min', today);
+            
+            $('#rentalDate').change(function() {
+                const minReturn = new Date($(this).val());
+                minReturn.setDate(minReturn.getDate() + 1);
+                $('#returnDate').attr('min', minReturn.toISOString().split('T')[0]);
+            });
+
+            // Trigger initial calculation if dates are pre-filled
+            if ($('#rentalDate').val() && $('#returnDate').val()) {
+                calculateRental();
+            }
+        });
+    </script>
+}

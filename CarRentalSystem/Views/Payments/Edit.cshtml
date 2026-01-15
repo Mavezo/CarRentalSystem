@@ -1,0 +1,251 @@
+@model CarRentalSystem.Entities.Rentals.Payment
+
+@{
+    ViewData["Title"] = "Edit Payment";
+    var rentalInfo = ViewBag.Rental as CarRentalSystem.Entities.Rentals.Rental;
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-edit text-warning"></i> Edit Payment
+            </h1>
+            <p class="text-muted">Update payment transaction details</p>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Details
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Payment Form -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit"></i> Payment Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                        
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="RentalId" />
+
+                        <!-- Payment ID Display -->
+                        <div class="mb-3">
+                            <label class="form-label">Payment ID</label>
+                            <div class="alert alert-info">
+                                <strong>#@Model.Id</strong>
+                            </div>
+                        </div>
+
+                        <!-- Rental ID Display -->
+                        <div class="mb-3">
+                            <label class="form-label">Rental ID</label>
+                            <div class="alert alert-info">
+                                <strong>Rental #@Model.RentalId</strong>
+                                <a asp-controller="Rentals" asp-action="Details" asp-route-id="@Model.RentalId" 
+                                   class="btn btn-sm btn-info float-end">
+                                    <i class="fas fa-external-link-alt"></i> View Rental
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Payment Date -->
+                        <div class="mb-3">
+                            <label asp-for="PaymentDate" class="form-label">Payment Date</label>
+                            <input asp-for="PaymentDate" type="date" class="form-control" required />
+                            <span asp-validation-for="PaymentDate" class="text-danger"></span>
+                        </div>
+
+                        <!-- Amount -->
+                        <div class="mb-3">
+                            <label asp-for="Amount" class="form-label">Payment Amount</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input asp-for="Amount" type="number" step="0.01" min="0.01" 
+                                       class="form-control" required />
+                            </div>
+                            <span asp-validation-for="Amount" class="text-danger"></span>
+                        </div>
+
+                        <!-- Payment Method -->
+                        <div class="mb-3">
+                            <label asp-for="PaymentMethod" class="form-label">Payment Method</label>
+                            <select asp-for="PaymentMethod" class="form-select" required>
+                                @foreach (var method in Enum.GetValues<CarRentalSystem.Entities.Rentals.PaymentMethod>())
+                                {
+                                    <option value="@method">@method</option>
+                                }
+                            </select>
+                            <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+                        </div>
+
+                        <!-- Payment Status -->
+                        <div class="mb-3">
+                            <label asp-for="Status" class="form-label">Payment Status</label>
+                            <select asp-for="Status" class="form-select" required>
+                                @foreach (var status in Enum.GetValues<CarRentalSystem.Entities.Rentals.PaymentStatus>())
+                                {
+                                    <option value="@status">@status</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Status" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i> Change status to reflect the current payment state
+                            </small>
+                        </div>
+
+                        <hr />
+
+                        <!-- Form Actions -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning btn-lg">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rental Information Panel -->
+        <div class="col-lg-6">
+            @if (rentalInfo != null)
+            {
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-file-contract"></i> Related Rental Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">Client:</dt>
+                            <dd class="col-sm-8">
+                                @if (rentalInfo.Client != null)
+                                {
+                                    <a asp-controller="Clients" asp-action="Details" asp-route-id="@rentalInfo.Client.Id">
+                                        @rentalInfo.Client.FirstName @rentalInfo.Client.LastName
+                                    </a>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-4">Vehicle:</dt>
+                            <dd class="col-sm-8">
+                                @if (rentalInfo.Car?.Model?.Brand != null)
+                                {
+                                    <span>@rentalInfo.Car.Model.Brand.BrandName @rentalInfo.Car.Model.ModelName</span>
+                                    <br />
+                                    <small class="text-muted">@rentalInfo.Car.RegistrationNumber</small>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-4">Daily Rate:</dt>
+                            <dd class="col-sm-8"><strong>@rentalInfo.Car?.DailyPrice.ToString("C")</strong></dd>
+
+                            <dt class="col-sm-4">Rental Period:</dt>
+                            <dd class="col-sm-8">
+                                @rentalInfo.RentalDate.ToString("MMM dd, yyyy")
+                                @if (rentalInfo.ReturnDate.HasValue)
+                                {
+                                    <span> - @rentalInfo.ReturnDate.Value.ToString("MMM dd, yyyy")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-warning"> - Not returned</span>
+                                }
+                            </dd>
+
+                            @{
+                                var rentalDays = rentalInfo.ReturnDate.HasValue
+                                    ? (rentalInfo.ReturnDate.Value - rentalInfo.RentalDate).Days
+                                    : (DateTime.Now - rentalInfo.RentalDate).Days;
+                                if (rentalDays < 1) rentalDays = 1;
+                                var totalCost = rentalInfo.Car?.DailyPrice * rentalDays ?? 0;
+                                var totalPaid = rentalInfo.Payments?
+                                    .Where(p => p.Status == CarRentalSystem.Entities.Rentals.PaymentStatus.Completed)
+                                    .Sum(p => p.Amount) ?? 0;
+                                var remaining = totalCost - totalPaid;
+                            }
+
+                            <dt class="col-sm-4">Total Cost:</dt>
+                            <dd class="col-sm-8">
+                                <strong>@totalCost.ToString("C")</strong>
+                                <br />
+                                <small class="text-muted">(@rentalDays days)</small>
+                            </dd>
+
+                            <dt class="col-sm-4">Total Paid:</dt>
+                            <dd class="col-sm-8"><span class="text-success">@totalPaid.ToString("C")</span></dd>
+
+                            <dt class="col-sm-4">Remaining:</dt>
+                            <dd class="col-sm-8">
+                                <strong class="@(remaining > 0 ? "text-danger" : "text-success")">
+                                    @remaining.ToString("C")
+                                </strong>
+                            </dd>
+
+                            <dt class="col-sm-4">Rental Status:</dt>
+                            <dd class="col-sm-8 mb-0">
+                                @switch (rentalInfo.Status)
+                                {
+                                    case CarRentalSystem.Entities.Rentals.RentalStatus.Active:
+                                        <span class="badge bg-warning text-dark">Active</span>
+                                        break;
+                                    case CarRentalSystem.Entities.Rentals.RentalStatus.Completed:
+                                        <span class="badge bg-success">Completed</span>
+                                        break;
+                                    case CarRentalSystem.Entities.Rentals.RentalStatus.Reserved:
+                                        <span class="badge bg-info">Reserved</span>
+                                        break;
+                                    case CarRentalSystem.Entities.Rentals.RentalStatus.Cancelled:
+                                        <span class="badge bg-secondary">Cancelled</span>
+                                        break;
+                                    case CarRentalSystem.Entities.Rentals.RentalStatus.Overdue:
+                                        <span class="badge bg-danger">Overdue</span>
+                                        break;
+                                }
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            }
+
+            <!-- Edit Notes -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Important Notes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li><strong>Status Changes:</strong> Update the status to reflect actual payment state</li>
+                        <li><strong>Completed:</strong> Payment has been successfully received</li>
+                        <li><strong>Pending:</strong> Payment is awaiting confirmation</li>
+                        <li><strong>Failed:</strong> Payment transaction failed</li>
+                        <li><strong>Refunded:</strong> Payment has been refunded to client</li>
+                        <li><strong>Amount:</strong> Be careful when modifying the payment amount</li>
+                        <li><strong>Date:</strong> Ensure the payment date is accurate</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

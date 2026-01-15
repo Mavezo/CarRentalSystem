@@ -66,13 +66,11 @@ namespace CarRentalSystem.Controllers
             }
 
             var client = await _context.Clients
-                .Include(c => c.Rentals)
-                    .ThenInclude(r => r.Car)
-                        .ThenInclude(c => c!.Model)
-                            .ThenInclude(m => m!.Brand)
-                .Include(c => c.Rentals)
+                .Include(c => c.Rentals!)
+                    .ThenInclude(r => r.Car!.Model!.Brand)
+                .Include(c => c.Rentals!)
                     .ThenInclude(r => r.Employee)
-                .Include(c => c.Rentals)
+                .Include(c => c.Rentals!)
                     .ThenInclude(r => r.Payments)
                 .FirstOrDefaultAsync(m => m.Id == id);
 

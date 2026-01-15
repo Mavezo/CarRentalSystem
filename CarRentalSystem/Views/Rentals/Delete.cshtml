@@ -1,0 +1,371 @@
+@model CarRentalSystem.Entities.Rentals.Rental
+
+@{
+    ViewData["Title"] = $"Delete Rental - #{Model.Id}";
+    var hasPayments = Model.Payments != null && Model.Payments.Any();
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-trash text-danger"></i> Delete Rental
+            </h1>
+            <p class="text-muted">Permanently remove rental record from system</p>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Details
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Delete Confirmation -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Permanent Deletion Warning
+                        <span class="badge bg-light text-dark float-end">Rental #@Model.Id</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle"></i> Critical Warning!
+                        </h5>
+                        <p><strong>You are about to permanently delete this rental record.</strong></p>
+                        <hr />
+                        <p class="mb-0">
+                            This action <strong>CANNOT BE UNDONE</strong> and will result in loss of historical data.
+                            Please ensure this is absolutely necessary before proceeding.
+                        </p>
+                    </div>
+
+                    @if (hasPayments)
+                    {
+                        <div class="alert alert-danger">
+                            <h5 class="alert-heading">
+                                <i class="fas fa-ban"></i> Cannot Delete!
+                            </h5>
+                            <p>
+                                <strong>This rental has @Model.Payments!.Count associated payment(s).</strong>
+                            </p>
+                            <p>
+                                You must delete all payments before you can delete this rental.
+                            </p>
+                            <hr />
+                            <p class="mb-0">
+                                <a asp-controller="Payments" asp-action="Index" class="btn btn-sm btn-light">
+                                    <i class="fas fa-dollar-sign"></i> View Payments
+                                </a>
+                            </p>
+                        </div>
+                    }
+
+                    <!-- Rental Details -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-primary border-bottom pb-2">
+                            <i class="fas fa-file-contract"></i> Rental Information
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <dl class="row">
+                                    <dt class="col-sm-5">Rental ID:</dt>
+                                    <dd class="col-sm-7"><strong>#@Model.Id</strong></dd>
+
+                                    <dt class="col-sm-5">Client:</dt>
+                                    <dd class="col-sm-7">
+                                        @if (Model.Client != null)
+                                        {
+                                            <strong>@Model.Client.FirstName @Model.Client.LastName</strong>
+                                            <br />
+                                            <small class="text-muted">@Model.Client.Email</small>
+                                        }
+                                    </dd>
+
+                                    <dt class="col-sm-5">Vehicle:</dt>
+                                    <dd class="col-sm-7 mb-0">
+                                        @if (Model.Car?.Model?.Brand != null)
+                                        {
+                                            <strong>@Model.Car.Model.Brand.BrandName @Model.Car.Model.ModelName</strong>
+                                            <br />
+                                            <span class="badge bg-dark">@Model.Car.RegistrationNumber</span>
+                                        }
+                                    </dd>
+                                </dl>
+                            </div>
+                            <div class="col-md-6">
+                                <dl class="row">
+                                    <dt class="col-sm-5">Start Date:</dt>
+                                    <dd class="col-sm-7">
+                                        @Model.RentalDate.ToString("MMMM dd, yyyy")
+                                    </dd>
+
+                                    <dt class="col-sm-5">Return Date:</dt>
+                                    <dd class="col-sm-7">
+                                        @if (Model.ReturnDate.HasValue)
+                                        {
+                                            <span>@Model.ReturnDate.Value.ToString("MMMM dd, yyyy")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Not set</span>
+                                        }
+                                    </dd>
+
+                                    <dt class="col-sm-5">Status:</dt>
+                                    <dd class="col-sm-7 mb-0">
+                                        @switch (Model.Status)
+                                        {
+                                            case CarRentalSystem.Entities.Rentals.RentalStatus.Reserved:
+                                                <span class="badge bg-info">Reserved</span>
+                                                break;
+                                            case CarRentalSystem.Entities.Rentals.RentalStatus.Active:
+                                                <span class="badge bg-warning text-dark">Active</span>
+                                                break;
+                                            case CarRentalSystem.Entities.Rentals.RentalStatus.Completed:
+                                                <span class="badge bg-success">Completed</span>
+                                                break;
+                                            case CarRentalSystem.Entities.Rentals.RentalStatus.Cancelled:
+                                                <span class="badge bg-secondary">Cancelled</span>
+                                                break;
+                                            case CarRentalSystem.Entities.Rentals.RentalStatus.Overdue:
+                                                <span class="badge bg-danger">Overdue</span>
+                                                break;
+                                        }
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Employee Information -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-primary border-bottom pb-2">
+                            <i class="fas fa-user-tie"></i> Assigned Employee
+                        </h6>
+                        @if (Model.Employee != null)
+                        {
+                            <dl class="row mb-0">
+                                <dt class="col-sm-3">Name:</dt>
+                                <dd class="col-sm-9">
+                                    <strong>@Model.Employee.FirstName @Model.Employee.LastName</strong>
+                                </dd>
+
+                                <dt class="col-sm-3">Position:</dt>
+                                <dd class="col-sm-9 mb-0">@Model.Employee.Position</dd>
+                            </dl>
+                        }
+                    </div>
+
+                    <!-- Payment Information -->
+                    @if (hasPayments)
+                    {
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-danger border-bottom pb-2">
+                                <i class="fas fa-dollar-sign"></i> Associated Payments
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-danger">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Date</th>
+                                            <th>Method</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var payment in Model.Payments!)
+                                        {
+                                            <tr>
+                                                <td><strong>#@payment.Id</strong></td>
+                                                <td>@payment.PaymentDate.ToString("MMM dd, yyyy")</td>
+                                                <td>@payment.PaymentMethod</td>
+                                                <td><strong>@payment.Amount.ToString("C")</strong></td>
+                                                <td>
+                                                    @switch (payment.Status)
+                                                    {
+                                                        case CarRentalSystem.Entities.Rentals.PaymentStatus.Completed:
+                                                            <span class="badge bg-success">Completed</span>
+                                                            break;
+                                                        case CarRentalSystem.Entities.Rentals.PaymentStatus.Pending:
+                                                            <span class="badge bg-warning text-dark">Pending</span>
+                                                            break;
+                                                        case CarRentalSystem.Entities.Rentals.PaymentStatus.Failed:
+                                                            <span class="badge bg-danger">Failed</span>
+                                                            break;
+                                                        case CarRentalSystem.Entities.Rentals.PaymentStatus.Refunded:
+                                                            <span class="badge bg-secondary">Refunded</span>
+                                                            break;
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="text-danger mb-0">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>Action Required:</strong> Delete these @Model.Payments!.Count payment(s) first before deleting the rental.
+                            </p>
+                        </div>
+                    }
+
+                    <!-- Deletion Impact -->
+                    <div class="card border-warning bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="fw-bold text-warning">
+                                <i class="fas fa-info-circle"></i> What Will Be Deleted?
+                            </h6>
+                            <ul class="mb-0">
+                                <li>Complete rental record (ID #@Model.Id)</li>
+                                <li>Rental transaction history</li>
+                                <li>Client-vehicle association for this rental</li>
+                                <li>Employee assignment record</li>
+                                @if (!hasPayments)
+                                {
+                                    <li class="text-success">
+                                        <i class="fas fa-check"></i> No associated payments to worry about
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Deletion Form -->
+                    @if (!hasPayments)
+                    {
+                        <form asp-action="Delete" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" asp-for="Id" />
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-danger btn-lg" 
+                                        onclick="return confirm('?? FINAL WARNING ??\n\nYou are about to PERMANENTLY DELETE rental #@Model.Id.\n\nThis action CANNOT BE UNDONE!\n\nAre you absolutely certain you want to proceed?');">
+                                    <i class="fas fa-trash"></i> Permanently Delete Rental
+                                </button>
+                                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Cancel - Keep Rental
+                                </a>
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="d-grid">
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-arrow-left"></i> Back to Details
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Deletion Guidelines -->
+        <div class="col-lg-4">
+            <!-- When to Delete -->
+            <div class="card shadow-sm mb-3 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> When to Delete
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p><strong class="text-danger">Delete ONLY if:</strong></p>
+                    <ul>
+                        <li>Rental was created by mistake</li>
+                        <li>Duplicate entry was made</li>
+                        <li>Test data needs to be removed</li>
+                        <li>Data correction is required</li>
+                    </ul>
+
+                    <hr />
+
+                    <p><strong class="text-success">DO NOT delete if:</strong></p>
+                    <ul class="mb-0">
+                        <li>Rental was completed normally</li>
+                        <li>Has historical value</li>
+                        <li>Has associated payments</li>
+                        <li>Part of business records</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Alternative Actions -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb"></i> Better Alternatives
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Instead of deleting, consider:</strong></p>
+                    <ul>
+                        <li>
+                            <a asp-action="Cancel" asp-route-id="@Model.Id">
+                                <i class="fas fa-times-circle"></i> Cancel the rental
+                            </a>
+                            <br />
+                            <small class="text-muted">Keeps record but marks as cancelled</small>
+                        </li>
+                        <li class="mt-2">
+                            <a asp-action="Edit" asp-route-id="@Model.Id">
+                                <i class="fas fa-edit"></i> Edit rental details
+                            </a>
+                            <br />
+                            <small class="text-muted">Correct any mistakes in data</small>
+                        </li>
+                        <li class="mt-2">
+                            Leave as-is for historical records
+                            <br />
+                            <small class="text-muted">Maintain complete audit trail</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Compliance Warning -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">
+                        <i class="fas fa-balance-scale"></i> Compliance Notice
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <strong>Legal & Regulatory Considerations:</strong>
+                    </p>
+                    <ul class="mb-3">
+                        <li>Deleting rental records may violate data retention policies</li>
+                        <li>Financial records should be preserved</li>
+                        <li>Audit trails are important for compliance</li>
+                        <li>Consult with management before deletion</li>
+                    </ul>
+
+                    <div class="alert alert-warning mb-0">
+                        <small>
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Recommendation:</strong>
+                            Use cancellation instead of deletion to maintain complete business records.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <script>
+        alert('@TempData["ErrorMessage"]');
+    </script>
+}
