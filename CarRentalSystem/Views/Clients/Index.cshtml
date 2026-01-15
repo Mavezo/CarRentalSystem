@@ -1,0 +1,204 @@
+@model IEnumerable<CarRentalSystem.Entities.Users.Client>
+
+@{
+    ViewData["Title"] = "Clients";
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-users text-primary"></i> Client Management
+            </h1>
+            <p class="text-muted">Manage your client database</p>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Search and Filter Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form asp-action="Index" method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">
+                        <i class="fas fa-filter"></i> Search Type
+                    </label>
+                    <select name="searchType" class="form-select">
+                        <option value="" selected>All Fields</option>
+                        <option value="name" selected="@(ViewData["SearchType"]?.ToString() == "name")">Name</option>
+                        <option value="email" selected="@(ViewData["SearchType"]?.ToString() == "email")">Email</option>
+                        <option value="phone" selected="@(ViewData["SearchType"]?.ToString() == "phone")">Phone</option>
+                        <option value="pesel" selected="@(ViewData["SearchType"]?.ToString() == "pesel")">PESEL</option>
+                        <option value="city" selected="@(ViewData["SearchType"]?.ToString() == "city")">City</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">
+                        <i class="fas fa-search"></i> Search
+                    </label>
+                    <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control" placeholder="Enter search term..." />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mb-3">
+        <a asp-action="Create" class="btn btn-success">
+            <i class="fas fa-user-plus"></i> Add New Client
+        </a>
+        @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
+        {
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Clear Filter
+            </a>
+        }
+    </div>
+
+    <!-- Clients Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-list"></i> Client List (@Model.Count() clients)
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>
+                                    <i class="fas fa-hashtag"></i> ID
+                                </th>
+                                <th>
+                                    <i class="fas fa-user"></i> Full Name
+                                </th>
+                                <th>
+                                    <i class="fas fa-id-card"></i> PESEL
+                                </th>
+                                <th>
+                                    <i class="fas fa-envelope"></i> Email
+                                </th>
+                                <th>
+                                    <i class="fas fa-phone"></i> Phone
+                                </th>
+                                <th>
+                                    <i class="fas fa-map-marker-alt"></i> Location
+                                </th>
+                                <th class="text-center">
+                                    <i class="fas fa-cogs"></i> Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var client in Model)
+                            {
+                                <tr>
+                                    <td>@client.Id</td>
+                                    <td>
+                                        <strong>@client.FirstName @client.LastName</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">@client.PESEL</span>
+                                    </td>
+                                    <td>
+                                        <a href="mailto:@client.Email" class="text-decoration-none">
+                                            @client.Email
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="tel:@client.PhoneNumber" class="text-decoration-none">
+                                            @client.PhoneNumber
+                                        </a>
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(client.City))
+                                        {
+                                            <span>
+                                                <i class="fas fa-city"></i> @client.City
+                                                @if (!string.IsNullOrEmpty(client.PostalCode))
+                                                {
+                                                    <br /><small class="text-muted">@client.PostalCode</small>
+                                                }
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group" role="group">
+                                            <a asp-action="Details" asp-route-id="@client.Id" class="btn btn-sm btn-info" title="Details">
+                                                <i class="fas fa-info-circle"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@client.Id" class="btn btn-sm btn-warning" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@client.Id" class="btn btn-sm btn-danger" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No clients found</h5>
+                    @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()))
+                    {
+                        <p class="text-muted">Try adjusting your search criteria</p>
+                        <a asp-action="Index" class="btn btn-primary">
+                            <i class="fas fa-list"></i> View All Clients
+                        </a>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Get started by adding your first client</p>
+                        <a asp-action="Create" class="btn btn-success">
+                            <i class="fas fa-user-plus"></i> Add New Client
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            $('.alert').fadeOut('slow');
+        }, 5000);
+    </script>
+}
