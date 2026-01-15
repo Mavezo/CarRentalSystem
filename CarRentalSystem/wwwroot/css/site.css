@@ -388,3 +388,84 @@ body {
 .modal-header .btn-close {
     filter: brightness(0) invert(1);
 }
+
+/* ============================================
+   TAB NAVIGATION STYLES - VISIBLE ON WHITE
+   ============================================ */
+
+.nav-tabs .nav-link {
+    color: #495057;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    font-weight: 500;
+    padding: 0.75rem 1.25rem;
+    transition: all 0.3s ease;
+    margin-right: 2px;
+}
+
+.nav-tabs .nav-link:hover {
+    color: #667eea;
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+    transform: translateY(-2px);
+}
+
+.nav-tabs .nav-link.active {
+    color: #ffffff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    font-weight: 600;
+}
+
+.nav-tabs .nav-link i {
+    margin-right: 5px;
+}
+
+/* Card Header Tabs - Enhanced visibility */
+.card-header-tabs .nav-link {
+    color: #495057;
+    background-color: #ffffff;
+    border: 2px solid #dee2e6;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+    margin-right: 5px;
+    border-radius: 5px 5px 0 0;
+}
+
+.card-header-tabs .nav-link:hover {
+    color: #667eea;
+    background-color: #f8f9fc;
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.card-header-tabs .nav-link.active {
+    color: #ffffff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    font-weight: 700;
+}
+
+/* Make sure the tab content area is visible */
+.tab-content {
+    background-color: #ffffff;
+    padding: 1.5rem;
+    border-radius: 0 0 5px 5px;
+}
+
+.tab-pane {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

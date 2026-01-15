@@ -1,0 +1,373 @@
+@model CarRentalSystem.Entities.Rentals.Rental
+
+@{
+    ViewData["Title"] = $"Return Vehicle - Rental #{Model.Id}";
+    var rentalDays = (DateTime.Now - Model.RentalDate).Days;
+    if (rentalDays < 1) rentalDays = 1;
+    var totalCost = Model.Car?.DailyPrice * rentalDays ?? 0;
+    var totalPaid = Model.Payments?
+        .Where(p => p.Status == CarRentalSystem.Entities.Rentals.PaymentStatus.Completed)
+        .Sum(p => p.Amount) ?? 0;
+    var remaining = totalCost - totalPaid;
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-check-circle text-success"></i> Return Vehicle
+            </h1>
+            <p class="text-muted">Complete rental and process vehicle return</p>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Details
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Return Confirmation -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-contract"></i> Rental Summary
+                        <span class="badge bg-light text-dark float-end">Rental #@Model.Id</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Client Information -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-primary border-bottom pb-2">
+                            <i class="fas fa-user"></i> Client Information
+                        </h6>
+                        @if (Model.Client != null)
+                        {
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <dl class="row">
+                                        <dt class="col-sm-4">Name:</dt>
+                                        <dd class="col-sm-8">
+                                            <strong>@Model.Client.FirstName @Model.Client.LastName</strong>
+                                        </dd>
+
+                                        <dt class="col-sm-4">Email:</dt>
+                                        <dd class="col-sm-8 mb-0">@Model.Client.Email</dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-6">
+                                    <dl class="row">
+                                        <dt class="col-sm-4">Phone:</dt>
+                                        <dd class="col-sm-8">@Model.Client.PhoneNumber</dd>
+
+                                        <dt class="col-sm-4">PESEL:</dt>
+                                        <dd class="col-sm-8 mb-0">@Model.Client.PESEL</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Vehicle Information -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-primary border-bottom pb-2">
+                            <i class="fas fa-car"></i> Vehicle Information
+                        </h6>
+                        @if (Model.Car?.Model?.Brand != null)
+                        {
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <dl class="row">
+                                        <dt class="col-sm-5">Vehicle:</dt>
+                                        <dd class="col-sm-7">
+                                            <strong>@Model.Car.Model.Brand.BrandName @Model.Car.Model.ModelName</strong>
+                                        </dd>
+
+                                        <dt class="col-sm-5">Registration:</dt>
+                                        <dd class="col-sm-7 mb-0">
+                                            <span class="badge bg-dark">@Model.Car.RegistrationNumber</span>
+                                        </dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-6">
+                                    <dl class="row">
+                                        <dt class="col-sm-5">Daily Rate:</dt>
+                                        <dd class="col-sm-7">
+                                            <strong>@Model.Car.DailyPrice.ToString("C")</strong>
+                                        </dd>
+
+                                        <dt class="col-sm-5">Mileage:</dt>
+                                        <dd class="col-sm-7 mb-0">@Model.Car.Mileage.ToString("N0") km</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Rental Period -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-primary border-bottom pb-2">
+                            <i class="fas fa-calendar"></i> Rental Period
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <small class="text-muted">Start Date</small>
+                                        <h5 class="mb-0">@Model.RentalDate.ToString("MMM dd, yyyy")</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <small class="text-muted">Return Date</small>
+                                        <h5 class="mb-0">@DateTime.Now.ToString("MMM dd, yyyy")</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <small class="text-muted">Duration</small>
+                                        <h5 class="mb-0">@rentalDays day(s)</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Financial Summary -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-primary border-bottom pb-2">
+                            <i class="fas fa-dollar-sign"></i> Financial Summary
+                        </h6>
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <div class="row mb-2">
+                                    <div class="col-6">
+                                        <span>Daily Rate:</span>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <strong>@Model.Car?.DailyPrice.ToString("C")</strong>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6">
+                                        <span>Number of Days:</span>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <strong>@rentalDays</strong>
+                                    </div>
+                                </div>
+                                <hr />
+                                <div class="row mb-2">
+                                    <div class="col-6">
+                                        <strong>Total Cost:</strong>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <strong class="text-primary fs-5">@totalCost.ToString("C")</strong>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6">
+                                        <strong>Total Paid:</strong>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <strong class="text-success fs-5">@totalPaid.ToString("C")</strong>
+                                    </div>
+                                </div>
+                                <hr />
+                                <div class="row">
+                                    <div class="col-6">
+                                        <strong class="fs-5">Balance Due:</strong>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <strong class="@(remaining > 0 ? "text-danger" : "text-success") fs-4">
+                                            @remaining.ToString("C")
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (remaining > 0)
+                        {
+                            <div class="alert alert-danger mt-3 mb-0">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>Payment Required!</strong>
+                                <br />
+                                Customer needs to pay <strong>@remaining.ToString("C")</strong> before completing return.
+                                <br />
+                                <a asp-controller="Payments" asp-action="Create" asp-route-rentalId="@Model.Id" 
+                                   class="btn btn-sm btn-light mt-2">
+                                    <i class="fas fa-dollar-sign"></i> Record Payment
+                                </a>
+                            </div>
+                        }
+                        else if (remaining == 0 && totalPaid > 0)
+                        {
+                            <div class="alert alert-success mt-3 mb-0">
+                                <i class="fas fa-check-circle"></i>
+                                <strong>Fully Paid!</strong> All payments have been completed.
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Return Confirmation -->
+                    <div class="card border-warning bg-light">
+                        <div class="card-body">
+                            <h6 class="fw-bold text-warning">
+                                <i class="fas fa-exclamation-triangle"></i> Return Confirmation
+                            </h6>
+                            <p class="mb-2">By confirming this return, you acknowledge that:</p>
+                            <ul class="mb-3">
+                                <li>Vehicle has been inspected for damage</li>
+                                <li>Fuel level has been verified</li>
+                                <li>All personal items have been removed</li>
+                                <li>Vehicle cleanliness is acceptable</li>
+                                <li>@(remaining > 0 ? "Outstanding balance will be collected" : "All payments are settled")</li>
+                            </ul>
+
+                            <form asp-action="Return" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="fas fa-check"></i> Confirm Vehicle Return
+                                    </button>
+                                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Return Checklist -->
+        <div class="col-lg-4">
+            <!-- Vehicle Inspection Checklist -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-check"></i> Return Checklist
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="fw-bold">Vehicle Inspection:</h6>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="check1">
+                        <label class="form-check-label" for="check1">
+                            Exterior condition checked
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="check2">
+                        <label class="form-check-label" for="check2">
+                            Interior condition checked
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="check3">
+                        <label class="form-check-label" for="check3">
+                            Fuel level verified
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="check4">
+                        <label class="form-check-label" for="check4">
+                            Mileage recorded
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="check5">
+                        <label class="form-check-label" for="check5">
+                            Personal items removed
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="check6">
+                        <label class="form-check-label" for="check6">
+                            Keys returned
+                        </label>
+                    </div>
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="check7">
+                        <label class="form-check-label" for="check7">
+                            Documents verified
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Status -->
+            @if (Model.Payments != null && Model.Payments.Any())
+            {
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-receipt"></i> Payment History
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var payment in Model.Payments.OrderByDescending(p => p.PaymentDate))
+                        {
+                            <div class="mb-2 pb-2 border-bottom">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">
+                                        @payment.PaymentDate.ToString("MMM dd, yyyy")
+                                    </small>
+                                    @switch (payment.Status)
+                                    {
+                                        case CarRentalSystem.Entities.Rentals.PaymentStatus.Completed:
+                                            <span class="badge bg-success">Completed</span>
+                                            break;
+                                        case CarRentalSystem.Entities.Rentals.PaymentStatus.Pending:
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                            break;
+                                        case CarRentalSystem.Entities.Rentals.PaymentStatus.Failed:
+                                            <span class="badge bg-danger">Failed</span>
+                                            break;
+                                        case CarRentalSystem.Entities.Rentals.PaymentStatus.Refunded:
+                                            <span class="badge bg-secondary">Refunded</span>
+                                            break;
+                                    }
+                                </div>
+                                <div>
+                                    <strong class="text-success">@payment.Amount.ToString("C")</strong>
+                                    <small class="text-muted">via @payment.PaymentMethod</small>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Important Notes -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Important
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>Complete vehicle inspection before confirming</li>
+                        <li>Record any damages or issues</li>
+                        <li>Ensure all payments are settled</li>
+                        <li>This action will mark the rental as <strong>Completed</strong></li>
+                        <li>Vehicle status will be updated to <strong>Available</strong></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

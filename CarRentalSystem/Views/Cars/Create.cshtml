@@ -1,0 +1,212 @@
+@model CarRentalSystem.Entities.Vehicles.Car
+
+@{
+    ViewData["Title"] = "Add New Car";
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-car-side text-primary"></i> Add New Car
+            </h1>
+            <p class="text-muted">Register a new vehicle in the fleet</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-car"></i> Vehicle Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" id="carForm">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        
+                        <!-- Vehicle Identification Section -->
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fas fa-id-card"></i> Vehicle Identification
+                        </h6>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="brandId" class="form-label">
+                                    Brand <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-trademark"></i></span>
+                                    <select id="brandId" class="form-select" required>
+                                        <option value="">Select Brand</option>
+                                        @if (ViewBag.Brands != null)
+                                        {
+                                            @foreach (SelectListItem brandItem in ViewBag.Brands)
+                                            {
+                                                <option value="@brandItem.Value" selected="@brandItem.Selected">@brandItem.Text</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                                <small class="text-muted">Select the car brand first</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ModelId" class="form-label">
+                                    Model <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-list"></i></span>
+                                    <select asp-for="ModelId" class="form-select" id="modelId" required>
+                                        <option value="">Select Brand First</option>
+                                    </select>
+                                </div>
+                                <span asp-validation-for="ModelId" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="RegistrationNumber" class="form-label">
+                                Registration Number <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                                <input asp-for="RegistrationNumber" class="form-control" placeholder="e.g., ABC-1234" maxlength="10" />
+                            </div>
+                            <span asp-validation-for="RegistrationNumber" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Vehicle Details Section -->
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">
+                            <i class="fas fa-cog"></i> Vehicle Details
+                        </h6>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Mileage" class="form-label">
+                                    Mileage (km) <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-tachometer-alt"></i></span>
+                                    <input asp-for="Mileage" class="form-control" type="number" min="0" step="1" placeholder="0" />
+                                </div>
+                                <span asp-validation-for="Mileage" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="DailyPrice" class="form-label">
+                                    Daily Rental Price <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                    <input asp-for="DailyPrice" class="form-control" type="number" min="0" step="0.01" placeholder="0.00" />
+                                </div>
+                                <span asp-validation-for="DailyPrice" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="AvailabilityStatus" class="form-label">
+                                    Availability Status <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-info-circle"></i></span>
+                                    <select asp-for="AvailabilityStatus" class="form-select">
+                                        <option value="@((int)CarRentalSystem.Entities.Vehicles.CarAvailability.Available)">Available</option>
+                                        <option value="@((int)CarRentalSystem.Entities.Vehicles.CarAvailability.Rented)">Rented</option>
+                                        <option value="@((int)CarRentalSystem.Entities.Vehicles.CarAvailability.Reserved)">Reserved</option>
+                                        <option value="@((int)CarRentalSystem.Entities.Vehicles.CarAvailability.Maintenance)">Maintenance</option>
+                                    </select>
+                                </div>
+                                <span asp-validation-for="AvailabilityStatus" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Location" class="form-label">
+                                    Location
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                    <input asp-for="Location" class="form-control" placeholder="e.g., Main Office" />
+                                </div>
+                                <span asp-validation-for="Location" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <hr class="my-4" />
+                        
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Add Car
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Help Card -->
+            <div class="card mt-3 border-info">
+                <div class="card-body">
+                    <h6 class="card-title text-info">
+                        <i class="fas fa-info-circle"></i> Information
+                    </h6>
+                    <ul class="mb-0 small">
+                        <li>All fields marked with <span class="text-danger">*</span> are required.</li>
+                        <li>Registration number must be unique.</li>
+                        <li>Select a brand first, then choose the model.</li>
+                        <li>Daily price will be used for rental calculations.</li>
+                        <li>Location is optional but helps with fleet management.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function() {
+            // Cascade dropdown: Brand -> Model
+            $('#brandId').change(function() {
+                var brandId = $(this).val();
+                var modelDropdown = $('#modelId');
+                
+                modelDropdown.empty();
+                modelDropdown.append('<option value="">Loading...</option>');
+                
+                if (brandId) {
+                    $.ajax({
+                        url: '@Url.Action("GetModelsByBrand", "Cars")',
+                        type: 'GET',
+                        data: { brandId: brandId },
+                        success: function(data) {
+                            modelDropdown.empty();
+                            modelDropdown.append('<option value="">Select Model</option>');
+                            $.each(data, function(i, model) {
+                                modelDropdown.append($('<option></option>').val(model.id).html(model.name));
+                            });
+                        },
+                        error: function() {
+                            modelDropdown.empty();
+                            modelDropdown.append('<option value="">Error loading models</option>');
+                        }
+                    });
+                } else {
+                    modelDropdown.empty();
+                    modelDropdown.append('<option value="">Select Brand First</option>');
+                }
+            });
+
+            // Format registration number to uppercase
+            $('#RegistrationNumber').on('input', function() {
+                $(this).val($(this).val().toUpperCase());
+            });
+        });
+    </script>
+}

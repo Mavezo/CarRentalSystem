@@ -1,0 +1,309 @@
+@model IEnumerable<CarRentalSystem.Entities.Rentals.Rental>
+
+@{
+    ViewData["Title"] = "Rentals Management";
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-file-contract text-primary"></i> Rentals Management
+            </h1>
+            <p class="text-muted">Manage all vehicle rental transactions</p>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Filters Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-filter"></i> Search & Filter Rentals
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="get" asp-action="Index">
+                <div class="row g-3">
+                    <!-- Status Filter -->
+                    <div class="col-md-3">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="">All Statuses</option>
+                            @foreach (var status in Enum.GetValues<CarRentalSystem.Entities.Rentals.RentalStatus>())
+                            {
+                                <option value="@status" selected="@(ViewData["Status"]?.ToString() == status.ToString())">
+                                    @status
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Start Date Filter -->
+                    <div class="col-md-3">
+                        <label class="form-label">From Date</label>
+                        <input type="date" name="startDate" class="form-control" 
+                               value="@ViewData["StartDate"]" />
+                    </div>
+
+                    <!-- End Date Filter -->
+                    <div class="col-md-3">
+                        <label class="form-label">To Date</label>
+                        <input type="date" name="endDate" class="form-control" 
+                               value="@ViewData["EndDate"]" />
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="col-md-3">
+                        <label class="form-label d-block">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary w-100 mb-2">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary w-100">
+                            <i class="fas fa-redo"></i> Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mb-3">
+        <a asp-action="Create" class="btn btn-success btn-lg">
+            <i class="fas fa-plus"></i> New Rental
+        </a>
+    </div>
+
+    <!-- Statistics Row -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-info text-white shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-bookmark"></i> Reserved
+                    </h6>
+                    <h2 class="mb-0">
+                        @Model.Count(r => r.Status == CarRentalSystem.Entities.Rentals.RentalStatus.Reserved)
+                    </h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-car"></i> Active
+                    </h6>
+                    <h2 class="mb-0">
+                        @Model.Count(r => r.Status == CarRentalSystem.Entities.Rentals.RentalStatus.Active)
+                    </h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-check-circle"></i> Completed
+                    </h6>
+                    <h2 class="mb-0">
+                        @Model.Count(r => r.Status == CarRentalSystem.Entities.Rentals.RentalStatus.Completed)
+                    </h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-exclamation-triangle"></i> Overdue
+                    </h6>
+                    <h2 class="mb-0">
+                        @Model.Count(r => r.Status == CarRentalSystem.Entities.Rentals.RentalStatus.Overdue)
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rentals Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-list"></i> Rentals List
+                <span class="badge bg-light text-dark float-end">Total: @Model.Count()</span>
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Client</th>
+                                <th>Vehicle</th>
+                                <th>Employee</th>
+                                <th>Rental Date</th>
+                                <th>Return Date</th>
+                                <th>Duration</th>
+                                <th>Daily Rate</th>
+                                <th>Total Cost</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var rental in Model)
+                            {
+                                var rentalDays = rental.ReturnDate.HasValue
+                                    ? (rental.ReturnDate.Value - rental.RentalDate).Days
+                                    : (DateTime.Now - rental.RentalDate).Days;
+                                if (rentalDays < 1) rentalDays = 1;
+                                var totalCost = rental.Car?.DailyPrice * rentalDays ?? 0;
+                                var totalPaid = rental.Payments?
+                                    .Where(p => p.Status == CarRentalSystem.Entities.Rentals.PaymentStatus.Completed)
+                                    .Sum(p => p.Amount) ?? 0;
+
+                                <tr class="@(rental.Status == CarRentalSystem.Entities.Rentals.RentalStatus.Overdue ? "table-danger" : "")">
+                                    <td>
+                                        <strong>#@rental.Id</strong>
+                                    </td>
+                                    <td>
+                                        @if (rental.Client != null)
+                                        {
+                                            <a asp-controller="Clients" asp-action="Details" asp-route-id="@rental.Client.Id">
+                                                @rental.Client.FirstName @rental.Client.LastName
+                                            </a>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (rental.Car?.Model?.Brand != null)
+                                        {
+                                            <strong>@rental.Car.Model.Brand.BrandName @rental.Car.Model.ModelName</strong>
+                                            <br />
+                                            <small class="text-muted">@rental.Car.RegistrationNumber</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (rental.Employee != null)
+                                        {
+                                            <span>@rental.Employee.FirstName @rental.Employee.LastName</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <small>@rental.RentalDate.ToString("MMM dd, yyyy")</small>
+                                    </td>
+                                    <td>
+                                        @if (rental.ReturnDate.HasValue)
+                                        {
+                                            <small>@rental.ReturnDate.Value.ToString("MMM dd, yyyy")</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">Not returned</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">@rentalDays days</span>
+                                    </td>
+                                    <td>
+                                        <strong>@rental.Car?.DailyPrice.ToString("C")</strong>
+                                    </td>
+                                    <td>
+                                        <strong>@totalCost.ToString("C")</strong>
+                                        @if (totalPaid < totalCost)
+                                        {
+                                            <br />
+                                            <small class="text-danger">Paid: @totalPaid.ToString("C")</small>
+                                        }
+                                        else if (totalPaid > 0)
+                                        {
+                                            <br />
+                                            <small class="text-success">Paid: @totalPaid.ToString("C")</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        @switch (rental.Status)
+                                        {
+                                            case CarRentalSystem.Entities.Rentals.RentalStatus.Reserved:
+                                                <span class="badge bg-info">Reserved</span>
+                                                break;
+                                            case CarRentalSystem.Entities.Rentals.RentalStatus.Active:
+                                                <span class="badge bg-warning text-dark">Active</span>
+                                                break;
+                                            case CarRentalSystem.Entities.Rentals.RentalStatus.Completed:
+                                                <span class="badge bg-success">Completed</span>
+                                                break;
+                                            case CarRentalSystem.Entities.Rentals.RentalStatus.Cancelled:
+                                                <span class="badge bg-secondary">Cancelled</span>
+                                                break;
+                                            case CarRentalSystem.Entities.Rentals.RentalStatus.Overdue:
+                                                <span class="badge bg-danger">Overdue</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a asp-action="Details" asp-route-id="@rental.Id" 
+                                               class="btn btn-outline-info" title="Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            @if (rental.Status != CarRentalSystem.Entities.Rentals.RentalStatus.Completed &&
+                                                rental.Status != CarRentalSystem.Entities.Rentals.RentalStatus.Cancelled)
+                                            {
+                                                <a asp-action="Edit" asp-route-id="@rental.Id" 
+                                                   class="btn btn-outline-warning" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No rentals found matching your criteria.</p>
+                    <a asp-action="Create" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create First Rental
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-dismiss alerts after 5 seconds
+        window.setTimeout(function() {
+            $(".alert").fadeTo(500, 0).slideUp(500, function(){
+                $(this).remove();
+            });
+        }, 5000);
+    </script>
+}

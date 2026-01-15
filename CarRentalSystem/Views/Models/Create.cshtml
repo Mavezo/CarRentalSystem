@@ -1,0 +1,119 @@
+@model CarRentalSystem.Entities.Vehicles.Model
+
+@{
+    ViewData["Title"] = "Create Model";
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-plus-circle text-primary"></i> Create New Model
+            </h1>
+            <p class="text-muted">Add a new car model to the system</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-list"></i> Model Information
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="BrandId" class="form-label">
+                                <i class="fas fa-trademark"></i> Brand <span class="text-danger">*</span>
+                            </label>
+                            <select asp-for="BrandId" class="form-select" asp-items="ViewBag.Brands">
+                                <option value="">-- Select Brand --</option>
+                            </select>
+                            <span asp-validation-for="BrandId" class="text-danger"></span>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle"></i> Select the brand for this model. 
+                                <a asp-controller="Brands" asp-action="Create" class="text-decoration-none">Create new brand</a>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ModelName" class="form-label">
+                                <i class="fas fa-list"></i> Model Name <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="ModelName" class="form-control" placeholder="Enter model name (e.g., Camry, 3 Series, Accord)" />
+                            <span asp-validation-for="ModelName" class="text-danger"></span>
+                        </div>
+
+                        <hr />
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Create Model
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Section -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        <strong>Required fields:</strong>
+                    </p>
+                    <ul>
+                        <li>Brand (select from existing brands)</li>
+                        <li>Model Name (max 50 characters)</li>
+                    </ul>
+                    <hr />
+                    <p class="card-text">
+                        <i class="fas fa-lightbulb text-warning"></i> 
+                        <strong>Tip:</strong> Make sure to select the correct brand before creating the model.
+                    </p>
+                    <hr />
+                    <p class="card-text">
+                        <i class="fas fa-info-circle"></i> 
+                        After creating a model, you can add cars with this model.
+                    </p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-secondary mt-3">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-link"></i> Quick Links
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a asp-controller="Brands" asp-action="Index" class="btn btn-outline-primary">
+                            <i class="fas fa-trademark"></i> View All Brands
+                        </a>
+                        <a asp-controller="Brands" asp-action="Create" class="btn btn-outline-success">
+                            <i class="fas fa-plus"></i> Create New Brand
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

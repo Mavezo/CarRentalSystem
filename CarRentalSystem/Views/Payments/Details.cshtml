@@ -1,0 +1,309 @@
+@model CarRentalSystem.Entities.Rentals.Payment
+
+@{
+    ViewData["Title"] = "Payment Details";
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-money-bill-wave text-success"></i> Payment Details
+            </h1>
+            <p class="text-muted">Payment transaction information</p>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit Payment
+        </a>
+        <a asp-controller="Rentals" asp-action="Details" asp-route-id="@Model.RentalId" class="btn btn-info">
+            <i class="fas fa-file-contract"></i> View Rental
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Payment Information Card -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-receipt"></i> Payment Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
+                             style="width: 100px; height: 100px; font-size: 2.5rem;">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <h3 class="mt-3 mb-1 text-success">@Model.Amount.ToString("C")</h3>
+                        <p class="text-muted">Payment ID: #@Model.Id</p>
+                    </div>
+
+                    <hr />
+
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">
+                            <i class="fas fa-calendar-alt text-success"></i> Payment Date
+                        </dt>
+                        <dd class="col-sm-7">
+                            <strong>@Model.PaymentDate.ToString("MMMM dd, yyyy")</strong>
+                        </dd>
+
+                        <dt class="col-sm-5">
+                            <i class="fas fa-credit-card text-success"></i> Payment Method
+                        </dt>
+                        <dd class="col-sm-7">
+                            @switch (Model.PaymentMethod)
+                            {
+                                case CarRentalSystem.Entities.Rentals.PaymentMethod.CreditCard:
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-credit-card"></i> Credit Card
+                                    </span>
+                                    break;
+                                case CarRentalSystem.Entities.Rentals.PaymentMethod.Cash:
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-money-bill"></i> Cash
+                                    </span>
+                                    break;
+                                case CarRentalSystem.Entities.Rentals.PaymentMethod.BankTransfer:
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-university"></i> Bank Transfer
+                                    </span>
+                                    break;
+                                case CarRentalSystem.Entities.Rentals.PaymentMethod.BLIK:
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-mobile-alt"></i> BLIK
+                                    </span>
+                                    break;
+                            }
+                        </dd>
+
+                        <dt class="col-sm-5">
+                            <i class="fas fa-info-circle text-success"></i> Payment Status
+                        </dt>
+                        <dd class="col-sm-7 mb-0">
+                            @switch (Model.Status)
+                            {
+                                case CarRentalSystem.Entities.Rentals.PaymentStatus.Completed:
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check-circle"></i> Completed
+                                    </span>
+                                    break;
+                                case CarRentalSystem.Entities.Rentals.PaymentStatus.Pending:
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-clock"></i> Pending
+                                    </span>
+                                    break;
+                                case CarRentalSystem.Entities.Rentals.PaymentStatus.Failed:
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-times-circle"></i> Failed
+                                    </span>
+                                    break;
+                                case CarRentalSystem.Entities.Rentals.PaymentStatus.Refunded:
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-undo"></i> Refunded
+                                    </span>
+                                    break;
+                            }
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rental Information Card -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-contract"></i> Related Rental Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">
+                            <i class="fas fa-hashtag text-info"></i> Rental ID
+                        </dt>
+                        <dd class="col-sm-8">
+                            <a asp-controller="Rentals" asp-action="Details" asp-route-id="@Model.RentalId" class="btn btn-sm btn-info">
+                                View Rental #@Model.RentalId
+                            </a>
+                        </dd>
+
+                        @if (Model.Rental != null)
+                        {
+                            <dt class="col-sm-4">
+                                <i class="fas fa-user text-info"></i> Client
+                            </dt>
+                            <dd class="col-sm-8">
+                                @if (Model.Rental.Client != null)
+                                {
+                                    <a asp-controller="Clients" asp-action="Details" asp-route-id="@Model.Rental.Client.Id">
+                                        @Model.Rental.Client.FirstName @Model.Rental.Client.LastName
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-4">
+                                <i class="fas fa-car text-info"></i> Vehicle
+                            </dt>
+                            <dd class="col-sm-8">
+                                @if (Model.Rental.Car?.Model?.Brand != null)
+                                {
+                                    <div>
+                                        <strong>@Model.Rental.Car.Model.Brand.BrandName @Model.Rental.Car.Model.ModelName</strong>
+                                        <br />
+                                        <small class="text-muted">Registration: @Model.Rental.Car.RegistrationNumber</small>
+                                        <br />
+                                        <small class="text-muted">Daily Rate: @Model.Rental.Car.DailyPrice.ToString("C")</small>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-4">
+                                <i class="fas fa-calendar-check text-info"></i> Rental Period
+                            </dt>
+                            <dd class="col-sm-8">
+                                <strong>From:</strong> @Model.Rental.RentalDate.ToString("MMM dd, yyyy")
+                                <br />
+                                @if (Model.Rental.ReturnDate.HasValue)
+                                {
+                                    <span><strong>To:</strong> @Model.Rental.ReturnDate.Value.ToString("MMM dd, yyyy")</span>
+                                    <br />
+                                    <small class="text-muted">
+                                        Duration: @((Model.Rental.ReturnDate.Value - Model.Rental.RentalDate).Days) days
+                                    </small>
+                                }
+                                else
+                                {
+                                    <span class="text-warning"><strong>To:</strong> Not returned yet</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-4">
+                                <i class="fas fa-info-circle text-info"></i> Rental Status
+                            </dt>
+                            <dd class="col-sm-8">
+                                @switch (Model.Rental.Status)
+                                {
+                                    case CarRentalSystem.Entities.Rentals.RentalStatus.Active:
+                                        <span class="badge bg-warning text-dark">Active</span>
+                                        break;
+                                    case CarRentalSystem.Entities.Rentals.RentalStatus.Completed:
+                                        <span class="badge bg-success">Completed</span>
+                                        break;
+                                    case CarRentalSystem.Entities.Rentals.RentalStatus.Reserved:
+                                        <span class="badge bg-info">Reserved</span>
+                                        break;
+                                    case CarRentalSystem.Entities.Rentals.RentalStatus.Cancelled:
+                                        <span class="badge bg-secondary">Cancelled</span>
+                                        break;
+                                    case CarRentalSystem.Entities.Rentals.RentalStatus.Overdue:
+                                        <span class="badge bg-danger">Overdue</span>
+                                        break;
+                                }
+                            </dd>
+
+                            <dt class="col-sm-4">
+                                <i class="fas fa-user-tie text-info"></i> Processed By
+                            </dt>
+                            <dd class="col-sm-8 mb-0">
+                                @if (Model.Rental.Employee != null)
+                                {
+                                    <a asp-controller="Employees" asp-action="Details" asp-route-id="@Model.Rental.Employee.Id">
+                                        @Model.Rental.Employee.FirstName @Model.Rental.Employee.LastName
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Summary Card -->
+    @if (Model.Rental != null)
+    {
+        var totalPayments = Model.Rental.Payments?
+            .Where(p => p.Status == CarRentalSystem.Entities.Rentals.PaymentStatus.Completed)
+            .Sum(p => p.Amount) ?? 0;
+
+        var rentalDays = Model.Rental.ReturnDate.HasValue
+            ? (Model.Rental.ReturnDate.Value - Model.Rental.RentalDate).Days
+            : (DateTime.Now - Model.Rental.RentalDate).Days;
+
+        if (rentalDays < 1) rentalDays = 1;
+
+        var totalCost = Model.Rental.Car?.DailyPrice * rentalDays ?? 0;
+        var remainingAmount = totalCost - totalPayments;
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calculator"></i> Payment Summary for Rental #@Model.RentalId
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="stat-box p-3 border rounded">
+                                    <h4 class="text-primary mb-1">@totalCost.ToString("C")</h4>
+                                    <small class="text-muted">Total Cost</small>
+                                    <br />
+                                    <small class="text-muted">(@rentalDays days ? @Model.Rental.Car?.DailyPrice.ToString("C"))</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-box p-3 border rounded">
+                                    <h4 class="text-success mb-1">@totalPayments.ToString("C")</h4>
+                                    <small class="text-muted">Total Paid</small>
+                                    <br />
+                                    <small class="text-muted">(@(Model.Rental.Payments?.Count(p => p.Status == CarRentalSystem.Entities.Rentals.PaymentStatus.Completed) ?? 0) payments)</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-box p-3 border rounded">
+                                    <h4 class="@(remainingAmount > 0 ? "text-danger" : "text-success") mb-1">
+                                        @remainingAmount.ToString("C")
+                                    </h4>
+                                    <small class="text-muted">Remaining Balance</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-box p-3 border rounded">
+                                    <h4 class="text-info mb-1">
+                                        @((totalPayments / totalCost * 100).ToString("F1"))%
+                                    </h4>
+                                    <small class="text-muted">Paid Percentage</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

@@ -1,0 +1,203 @@
+@model IEnumerable<CarRentalSystem.Entities.Vehicles.Model>
+
+@{
+    ViewData["Title"] = "Models";
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-list text-primary"></i> Models Management
+            </h1>
+            <p class="text-muted">Manage car models</p>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Action Bar -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New Model
+            </a>
+            <a asp-controller="Brands" asp-action="Index" class="btn btn-secondary">
+                <i class="fas fa-trademark"></i> Manage Brands
+            </a>
+        </div>
+        <div class="col-md-6 text-end">
+            <span class="badge bg-info fs-6">
+                <i class="fas fa-list"></i> Total Models: @Model.Count()
+            </span>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-filter"></i> Filters
+            </h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="Index" method="get" class="row g-3">
+                <div class="col-md-6">
+                    <label for="searchString" class="form-label">
+                        <i class="fas fa-search"></i> Search
+                    </label>
+                    <input type="text" 
+                           name="searchString" 
+                           value="@ViewData["CurrentFilter"]" 
+                           class="form-control" 
+                           placeholder="Model name or brand..." />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="brandId" class="form-label">
+                        <i class="fas fa-trademark"></i> Brand
+                    </label>
+                    <select name="brandId" class="form-select">
+                        <option value="">All Brands</option>
+                        @if (ViewBag.Brands != null)
+                        {
+                            @foreach (SelectListItem brand in ViewBag.Brands)
+                            {
+                                <option value="@brand.Value" selected="@(ViewData["BrandId"]?.ToString() == brand.Value)">@brand.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Apply
+                    </button>
+                </div>
+
+                <div class="col-12">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Clear Filters
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Models Table -->
+    @if (Model.Any())
+    {
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th><i class="fas fa-hashtag"></i> ID</th>
+                                <th><i class="fas fa-list"></i> Model Name</th>
+                                <th><i class="fas fa-trademark"></i> Brand</th>
+                                <th><i class="fas fa-car"></i> Cars Count</th>
+                                <th><i class="fas fa-cogs"></i> Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var carModel in Model)
+                            {
+                                var carsCount = ViewBag.ModelCounts != null && 
+                                               ((Dictionary<int, int>)ViewBag.ModelCounts).ContainsKey(carModel.Id) 
+                                               ? ((Dictionary<int, int>)ViewBag.ModelCounts)[carModel.Id] 
+                                               : 0;
+
+                                <tr>
+                                    <td>@carModel.Id</td>
+                                    <td>
+                                        <strong>@carModel.ModelName</strong>
+                                    </td>
+                                    <td>
+                                        @if (carModel.Brand != null)
+                                        {
+                                            <a asp-controller="Brands" asp-action="Details" asp-route-id="@carModel.Brand.Id" class="text-decoration-none">
+                                                <span class="badge bg-primary">
+                                                    <i class="fas fa-trademark"></i> @carModel.Brand.BrandName
+                                                </span>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (carsCount > 0)
+                                        {
+                                            <span class="badge bg-success">@carsCount car(s)</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">No cars</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a asp-action="Edit" asp-route-id="@carModel.Id" 
+                                               class="btn btn-sm btn-warning" title="Edit Model">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@carModel.Id" 
+                                               class="btn btn-sm btn-danger" title="Delete Model">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading">
+                <i class="fas fa-info-circle"></i> No Models Found
+            </h4>
+            @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"]?.ToString()) || ViewData["BrandId"] != null)
+            {
+                <p>No models match your search criteria. Try adjusting your filters or <a asp-action="Index" class="alert-link">clear the filters</a>.</p>
+            }
+            else
+            {
+                <p>There are no models in the system yet. <a asp-action="Create" class="alert-link">Add your first model</a> to get started.</p>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-dismiss alerts after 5 seconds
+        window.setTimeout(function() {
+            $(".alert").fadeTo(500, 0).slideUp(500, function(){
+                $(this).remove();
+            });
+        }, 5000);
+    </script>
+}

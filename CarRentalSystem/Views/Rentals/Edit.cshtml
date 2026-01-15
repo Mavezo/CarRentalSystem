@@ -1,0 +1,294 @@
+@model CarRentalSystem.Entities.Rentals.Rental
+
+@{
+    ViewData["Title"] = $"Edit Rental - #{Model.Id}";
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-edit text-warning"></i> Edit Rental
+            </h1>
+            <p class="text-muted">Modify rental transaction details</p>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Details
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Edit Form -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-contract"></i> Rental Information
+                        <span class="badge bg-dark float-end">ID: #@Model.Id</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                        
+                        <input type="hidden" asp-for="Id" />
+
+                        <!-- Client Selection -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-primary border-bottom pb-2">
+                                <i class="fas fa-user"></i> Client Information
+                            </h6>
+                            <div class="mb-3">
+                                <label asp-for="ClientId" class="form-label">Client *</label>
+                                <select asp-for="ClientId" asp-items="ViewBag.ClientId" 
+                                        class="form-select" required>
+                                </select>
+                                <span asp-validation-for="ClientId" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <!-- Vehicle Selection -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-primary border-bottom pb-2">
+                                <i class="fas fa-car"></i> Vehicle Information
+                            </h6>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Current Vehicle:</strong>
+                                @if (Model.Car?.Model?.Brand != null)
+                                {
+                                    <span>
+                                        @Model.Car.Model.Brand.BrandName @Model.Car.Model.ModelName
+                                        (@Model.Car.RegistrationNumber) - @Model.Car.DailyPrice.ToString("C")/day
+                                    </span>
+                                }
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="CarId" class="form-label">Change Vehicle (Optional)</label>
+                                <select asp-for="CarId" asp-items="ViewBag.CarId" class="form-select">
+                                </select>
+                                <span asp-validation-for="CarId" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-exclamation-triangle"></i> 
+                                    Only available vehicles are shown. Leave unchanged if not needed.
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Employee Selection -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-primary border-bottom pb-2">
+                                <i class="fas fa-user-tie"></i> Employee Information
+                            </h6>
+                            <div class="mb-3">
+                                <label asp-for="EmployeeId" class="form-label">Assigned Employee *</label>
+                                <select asp-for="EmployeeId" asp-items="ViewBag.EmployeeId" 
+                                        class="form-select" required>
+                                </select>
+                                <span asp-validation-for="EmployeeId" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <!-- Rental Dates -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-primary border-bottom pb-2">
+                                <i class="fas fa-calendar"></i> Rental Period
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="RentalDate" class="form-label">Rental Start Date *</label>
+                                        <input asp-for="RentalDate" type="date" class="form-control" 
+                                               id="rentalDate" required />
+                                        <span asp-validation-for="RentalDate" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="ReturnDate" class="form-label">Expected Return Date *</label>
+                                        <input asp-for="ReturnDate" type="date" class="form-control" 
+                                               id="returnDate" required />
+                                        <span asp-validation-for="ReturnDate" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rental Status -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-primary border-bottom pb-2">
+                                <i class="fas fa-tag"></i> Rental Status
+                            </h6>
+                            <div class="mb-3">
+                                <label asp-for="Status" class="form-label">Current Status *</label>
+                                <select asp-for="Status" class="form-select" required>
+                                    @foreach (var status in Enum.GetValues<CarRentalSystem.Entities.Rentals.RentalStatus>())
+                                    {
+                                        <option value="@status">@status</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="Status" class="text-danger"></span>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Changing status will update vehicle availability
+                                </small>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <!-- Form Actions -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning btn-lg">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Information Panel -->
+        <div class="col-lg-4">
+            <!-- Current Rental Info -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Current Rental Info
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Rental ID:</dt>
+                        <dd class="col-sm-7"><strong>#@Model.Id</strong></dd>
+
+                        <dt class="col-sm-5">Client:</dt>
+                        <dd class="col-sm-7">
+                            @if (Model.Client != null)
+                            {
+                                <span>@Model.Client.FirstName @Model.Client.LastName</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-5">Vehicle:</dt>
+                        <dd class="col-sm-7">
+                            @if (Model.Car?.Model?.Brand != null)
+                            {
+                                <span>@Model.Car.Model.Brand.BrandName @Model.Car.Model.ModelName</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-5">Start Date:</dt>
+                        <dd class="col-sm-7">@Model.RentalDate.ToString("MMM dd, yyyy")</dd>
+
+                        <dt class="col-sm-5">Return Date:</dt>
+                        <dd class="col-sm-7">
+                            @if (Model.ReturnDate.HasValue)
+                            {
+                                <span>@Model.ReturnDate.Value.ToString("MMM dd, yyyy")</span>
+                            }
+                            else
+                            {
+                                <span class="text-warning">Not set</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-5">Status:</dt>
+                        <dd class="col-sm-7 mb-0">
+                            @switch (Model.Status)
+                            {
+                                case CarRentalSystem.Entities.Rentals.RentalStatus.Reserved:
+                                    <span class="badge bg-info">Reserved</span>
+                                    break;
+                                case CarRentalSystem.Entities.Rentals.RentalStatus.Active:
+                                    <span class="badge bg-warning text-dark">Active</span>
+                                    break;
+                                case CarRentalSystem.Entities.Rentals.RentalStatus.Completed:
+                                    <span class="badge bg-success">Completed</span>
+                                    break;
+                                case CarRentalSystem.Entities.Rentals.RentalStatus.Cancelled:
+                                    <span class="badge bg-secondary">Cancelled</span>
+                                    break;
+                                case CarRentalSystem.Entities.Rentals.RentalStatus.Overdue:
+                                    <span class="badge bg-danger">Overdue</span>
+                                    break;
+                            }
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Status Change Guide -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-question-circle"></i> Status Guide
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>
+                            <strong>Reserved:</strong> Vehicle reserved, not yet picked up
+                        </li>
+                        <li>
+                            <strong>Active:</strong> Vehicle is with the customer
+                        </li>
+                        <li>
+                            <strong>Completed:</strong> Rental finished, vehicle returned
+                        </li>
+                        <li>
+                            <strong>Cancelled:</strong> Rental was cancelled
+                        </li>
+                        <li>
+                            <strong>Overdue:</strong> Return date passed, vehicle not returned
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Important Notes -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Important Notes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li><strong>Vehicle Availability:</strong> Changing status affects vehicle availability</li>
+                        <li><strong>Date Changes:</strong> Ensure return date is after rental date</li>
+                        <li><strong>Client Changes:</strong> Verify new client information</li>
+                        <li><strong>Vehicle Changes:</strong> Only available vehicles can be selected</li>
+                        <li><strong>Payments:</strong> Existing payments remain linked to this rental</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            // Set date validation
+            $('#rentalDate').change(function() {
+                const minReturn = new Date($(this).val());
+                minReturn.setDate(minReturn.getDate() + 1);
+                $('#returnDate').attr('min', minReturn.toISOString().split('T')[0]);
+            });
+
+            // Trigger validation on load
+            if ($('#rentalDate').val()) {
+                $('#rentalDate').trigger('change');
+            }
+        });
+    </script>
+}
