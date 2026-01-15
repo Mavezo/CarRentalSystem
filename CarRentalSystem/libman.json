@@ -1,0 +1,43 @@
+{
+  "version": "3.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "provider": "cdnjs",
+      "library": "font-awesome@6.4.0",
+      "destination": "wwwroot/lib/font-awesome/"
+    },
+    {
+      "provider": "jsdelivr",
+      "library": "datatables.net-bs5@1.13.6",
+      "destination": "wwwroot/lib/datatables/",
+      "files": [
+        "css/dataTables.bootstrap5.min.css",
+        "js/dataTables.bootstrap5.min.js"
+      ]
+    },
+    {
+      "provider": "jsdelivr",
+      "library": "datatables.net@1.13.6",
+      "destination": "wwwroot/lib/datatables/",
+      "files": [
+        "js/jquery.dataTables.min.js"
+      ]
+    },
+    {
+      "provider": "cdnjs",
+      "library": "select2@4.1.0-rc.0",
+      "destination": "wwwroot/lib/select2/"
+    },
+    {
+      "provider": "cdnjs",
+      "library": "toastr.js@2.1.4",
+      "destination": "wwwroot/lib/toastr/"
+    },
+    {
+      "provider": "cdnjs",
+      "library": "Chart.js@4.3.0",
+      "destination": "wwwroot/lib/chartjs/"
+    }
+  ]
+}

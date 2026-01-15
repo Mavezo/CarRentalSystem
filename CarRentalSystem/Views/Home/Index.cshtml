@@ -1,8 +1,412 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model CarRentalSystem.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-tachometer-alt text-primary"></i> Dashboard
+            </h1>
+            <p class="text-muted">Welcome to Car Rental Management System</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards Row 1 -->
+    <div class="row g-4 mb-4">
+        <!-- Total Clients Card -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Clients</h6>
+                            <h2 class="mb-0 fw-bold">@Model.TotalClients</h2>
+                            <small class="text-muted">Registered clients</small>
+                        </div>
+                        <div class="stat-icon bg-primary">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Employees -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Employees</h6>
+                            <h2 class="mb-0 fw-bold">@Model.TotalEmployees</h2>
+                            <small class="text-muted">Manage your team</small>
+                        </div>
+                        <div class="stat-icon bg-info">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Total Cars -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Cars</h6>
+                            <h2 class="mb-0 fw-bold">@Model.TotalCars</h2>
+                            <small class="text-success">
+                                <i class="fas fa-check-circle"></i> @Model.AvailableCars Available
+                            </small>
+                        </div>
+                        <div class="stat-icon bg-warning">
+                            <i class="fas fa-car"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Active Rentals -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Active Rentals</h6>
+                            <h2 class="mb-0 fw-bold">@Model.ActiveRentals</h2>
+                            <small class="text-muted">Total: @Model.TotalRentals</small>
+                        </div>
+                        <div class="stat-icon bg-success">
+                            <i class="fas fa-file-contract"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards Row 2 -->
+    <div class="row g-4 mb-4">
+        <!-- Monthly Revenue -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Monthly Revenue
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @Model.MonthlyRevenue.ToString("C")
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Cars -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Available Cars
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                @Model.AvailableCars / @Model.TotalCars
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-car fa-2x text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cars in Maintenance -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                In Maintenance
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.CarsInMaintenance</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tools fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overdue Rentals -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Overdue Rentals
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.OverdueRentals</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions & Charts Row -->
+    <div class="row">
+        <!-- Quick Actions -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-bolt"></i> Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <a asp-controller="Rentals" asp-action="Create" class="btn btn-primary btn-lg btn-block mb-3">
+                        <i class="fas fa-plus-circle"></i> New Rental
+                    </a>
+                    <a asp-controller="Clients" asp-action="Create" class="btn btn-success btn-lg btn-block mb-3">
+                        <i class="fas fa-user-plus"></i> Add Client
+                    </a>
+                    <a asp-controller="Cars" asp-action="Create" class="btn btn-info btn-lg btn-block mb-3">
+                        <i class="fas fa-car"></i> Add Vehicle
+                    </a>
+                    <a asp-controller="Payments" asp-action="Index" class="btn btn-warning btn-lg btn-block">
+                        <i class="fas fa-money-bill-wave"></i> View Payments
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Chart -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-line"></i> Daily Revenue Overview - January 2026
+                    </h6>
+                    <small class="text-muted">Current: Jan 15, 2026 | Monthly: @Model.MonthlyRevenue.ToString("C")</small>
+                </div>
+                <div class="card-body" style="position: relative; height: 400px;">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Module Navigation Cards -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <h4 class="mb-3">
+                <i class="fas fa-th-large"></i> System Modules
+            </h4>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Vehicles Module -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card text-white bg-gradient-primary shadow h-100">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-car fa-4x mb-3"></i>
+                    <h5 class="card-title">Vehicles</h5>
+                    <p class="card-text">Manage cars, brands, and models</p>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-center">
+                    <a asp-controller="Cars" asp-action="Index" class="btn btn-light btn-sm px-4">
+                        <i class="fas fa-arrow-right"></i> View All
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rentals Module -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card text-white bg-gradient-success shadow h-100">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-file-contract fa-4x mb-3"></i>
+                    <h5 class="card-title">Rentals</h5>
+                    <p class="card-text">Manage rental agreements</p>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-center">
+                    <a asp-controller="Rentals" asp-action="Index" class="btn btn-light btn-sm px-4">
+                        <i class="fas fa-arrow-right"></i> View All
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clients Module -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card text-white bg-gradient-info shadow h-100">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-users fa-4x mb-3"></i>
+                    <h5 class="card-title">Clients</h5>
+                    <p class="card-text">Client database management</p>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-center">
+                    <a asp-controller="Clients" asp-action="Index" class="btn btn-light btn-sm px-4">
+                        <i class="fas fa-arrow-right"></i> View All
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Maintenance Module -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card text-white bg-gradient-warning shadow h-100">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-tools fa-4x mb-3"></i>
+                    <h5 class="card-title">Maintenance</h5>
+                    <p class="card-text">Repairs and insurance tracking</p>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-center">
+                    <a asp-controller="Repairs" asp-action="Index" class="btn btn-light btn-sm px-4">
+                        <i class="fas fa-arrow-right"></i> View All
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        console.log('Chart.js version:', typeof Chart !== 'undefined' ? Chart.version : 'Not loaded');
+        console.log('Monthly Revenue:', @Model.MonthlyRevenue.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        
+        // Prepare daily revenue data from server
+        var dailyLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DailyLabels));
+        var dailyData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DailyRevenueData));
+        
+        console.log('Daily Labels:', dailyLabels);
+        console.log('Daily Data:', dailyData);
+        console.log('Data length:', dailyLabels.length, dailyData.length);
+        
+        // Check if data exists
+        if (!dailyLabels || dailyLabels.length === 0 || !dailyData || dailyData.length === 0) {
+            console.error('No data available for chart');
+            document.getElementById('revenueChart').parentElement.innerHTML = '<div class="alert alert-warning">No revenue data available for the selected period.</div>';
+        } else {
+            // Revenue Chart with Chart.js - Daily Revenue for Current Month
+            document.addEventListener('DOMContentLoaded', function() {
+                var canvas = document.getElementById('revenueChart');
+                if (!canvas) {
+                    console.error('Canvas element not found');
+                    return;
+                }
+                
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js is not loaded');
+                    return;
+                }
+                
+                var ctx = canvas.getContext('2d');
+                
+                try {
+                    var revenueChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: dailyLabels,
+                            datasets: [{
+                                label: 'Daily Revenue (January 2026)',
+                                data: dailyData,
+                                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                borderColor: 'rgba(102, 126, 234, 1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                pointBackgroundColor: 'rgba(102, 126, 234, 1)',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top'
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.dataset.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            label += new Intl.NumberFormat('en-US', { 
+                                                style: 'currency', 
+                                                currency: 'USD' 
+                                            }).format(context.parsed.y);
+                                            return label;
+                                        }
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Daily Revenue Overview - January 1-15, 2026',
+                                    font: {
+                                        size: 16
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return '$' + value.toLocaleString();
+                                        }
+                                    }
+                                },
+                                x: {
+                                    ticks: {
+                                        maxRotation: 45,
+                                        minRotation: 45
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
+                    console.log('Chart created successfully');
+                } catch (error) {
+                    console.error('Error creating chart:', error);
+                }
+            });
+        }
+
+        // Show welcome message
+        if (typeof toastr !== 'undefined') {
+            toastr.success('Welcome to Car Rental System Dashboard!', 'Hello!');
+        }
+    </script>
+}
