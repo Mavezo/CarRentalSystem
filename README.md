@@ -1,4 +1,5 @@
-A mini CRM project developed in 4–5 hours to test IDE agents and differences between models
+A mini CRM project developed in 4–5 hours to test IDE agents and differences between models.
+
 Not all entities have CRUD operations and corresponding views implemented for them
 
 <img width="1919" height="870" alt="image" src="https://github.com/user-attachments/assets/7f40d38b-024f-467a-8009-1078288e9620" />
