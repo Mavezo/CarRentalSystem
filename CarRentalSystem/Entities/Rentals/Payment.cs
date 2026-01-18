@@ -19,10 +19,9 @@ namespace CarRentalSystem.Entities.Rentals
         [DataType(DataType.Currency)]
         public decimal Amount { get; set; }
 
-        [StringLength(30)]
+        [Required]
         public required PaymentMethod PaymentMethod { get; set; } = PaymentMethod.CreditCard;
 
-        [StringLength(20)]
         public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
     }
 }
