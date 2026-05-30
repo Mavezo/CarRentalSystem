@@ -1,19 +1,17 @@
 using CarRentalSystem.Entities;
 using CarRentalSystem.Entities.Users;
+using CarRentalSystem.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CarRentalSystem.Controllers
 {
     public class EmployeesController : Controller
     {
-        private readonly CarRentalContext _context;
-        private readonly ILogger<EmployeesController> _logger;
+        private readonly IEmployeeService _employeeService;
 
-        public EmployeesController(CarRentalContext context, ILogger<EmployeesController> logger)
+        public EmployeesController(IEmployeeService employeeService)
         {
-            _context = context;
-            _logger = logger;
+            _employeeService = employeeService;
         }
 
         // GET: Employees
@@ -22,33 +20,9 @@ namespace CarRentalSystem.Controllers
             ViewData["CurrentFilter"] = searchString;
             ViewData["SearchType"] = searchType;
 
-            var employees = from e in _context.Employees
-                           select e;
+            var employees = await _employeeService.SearchEmployeesAsync(searchString, searchType);
 
-            if (!string.IsNullOrEmpty(searchString))
-            {
-                switch (searchType)
-                {
-                    case "name":
-                        employees = employees.Where(e => e.FirstName.Contains(searchString) 
-                                                      || e.LastName.Contains(searchString));
-                        break;
-                    case "position":
-                        employees = employees.Where(e => e.Position.Contains(searchString));
-                        break;
-                    case "phone":
-                        employees = employees.Where(e => e.Phone.Contains(searchString));
-                        break;
-                    default:
-                        employees = employees.Where(e => e.FirstName.Contains(searchString) 
-                                                      || e.LastName.Contains(searchString)
-                                                      || e.Position.Contains(searchString)
-                                                      || e.Phone.Contains(searchString));
-                        break;
-                }
-            }
-
-            return View(await employees.OrderBy(e => e.LastName).ToListAsync());
+            return View(employees);
         }
 
         // GET: Employees/Details/5
@@ -59,14 +33,7 @@ namespace CarRentalSystem.Controllers
                 return NotFound();
             }
 
-            var employee = await _context.Employees
-                .Include(e => e.Rentals!)
-                    .ThenInclude(r => r.Car!.Model!.Brand)
-                .Include(e => e.Rentals!)
-                    .ThenInclude(r => r.Client)
-                .Include(e => e.Rentals!)
-                    .ThenInclude(r => r.Payments)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var employee = await _employeeService.GetEmployeeWithRentalsAsync(id.Value);
 
             if (employee == null)
             {
@@ -89,17 +56,13 @@ namespace CarRentalSystem.Controllers
         {
             if (ModelState.IsValid)
             {
-                // Check if phone already exists
-                if (await _context.Employees.AnyAsync(e => e.Phone == employee.Phone))
+                if (await _employeeService.PhoneExistsAsync(employee.Phone))
                 {
                     ModelState.AddModelError("Phone", "An employee with this phone number already exists.");
                     return View(employee);
                 }
 
-                _context.Add(employee);
-                await _context.SaveChangesAsync();
-                
-                _logger.LogInformation($"New employee created: {employee.FirstName} {employee.LastName} (ID: {employee.Id})");
+                await _employeeService.CreateEmployeeAsync(employee);
                 TempData["SuccessMessage"] = $"Employee {employee.FirstName} {employee.LastName} has been successfully created.";
                 
                 return RedirectToAction(nameof(Index));
@@ -115,7 +78,7 @@ namespace CarRentalSystem.Controllers
                 return NotFound();
             }
 
-            var employee = await _context.Employees.FindAsync(id);
+            var employee = await _employeeService.GetEmployeeByIdAsync(id.Value);
             if (employee == null)
             {
                 return NotFound();
@@ -135,35 +98,14 @@ namespace CarRentalSystem.Controllers
 
             if (ModelState.IsValid)
             {
-                try
+                if (await _employeeService.PhoneExistsAsync(employee.Phone, id))
                 {
-                    // Check if phone is being changed and if it's already taken by another employee
-                    var existingPhoneEmployee = await _context.Employees
-                        .FirstOrDefaultAsync(e => e.Phone == employee.Phone && e.Id != employee.Id);
-                    
-                    if (existingPhoneEmployee != null)
-                    {
-                        ModelState.AddModelError("Phone", "An employee with this phone number already exists.");
-                        return View(employee);
-                    }
+                    ModelState.AddModelError("Phone", "An employee with this phone number already exists.");
+                    return View(employee);
+                }
 
-                    _context.Update(employee);
-                    await _context.SaveChangesAsync();
-                    
-                    _logger.LogInformation($"Employee updated: {employee.FirstName} {employee.LastName} (ID: {employee.Id})");
-                    TempData["SuccessMessage"] = $"Employee {employee.FirstName} {employee.LastName} has been successfully updated.";
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!EmployeeExists(employee.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                await _employeeService.UpdateEmployeeAsync(employee);
+                TempData["SuccessMessage"] = $"Employee {employee.FirstName} {employee.LastName} has been successfully updated.";
                 return RedirectToAction(nameof(Index));
             }
             return View(employee);
@@ -177,9 +119,7 @@ namespace CarRentalSystem.Controllers
                 return NotFound();
             }
 
-            var employee = await _context.Employees
-                .Include(e => e.Rentals)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var employee = await _employeeService.GetEmployeeWithRentalsAsync(id.Value);
             
             if (employee == null)
             {
@@ -194,34 +134,23 @@ namespace CarRentalSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var employee = await _context.Employees
-                .Include(e => e.Rentals)
-                .FirstOrDefaultAsync(e => e.Id == id);
+            var employee = await _employeeService.GetEmployeeByIdAsync(id);
             
             if (employee == null)
             {
                 return NotFound();
             }
 
-            // Check if employee has any rentals
-            if (employee.Rentals != null && employee.Rentals.Any())
+            if (!await _employeeService.CanDeleteEmployeeAsync(id))
             {
-                TempData["ErrorMessage"] = $"Cannot delete employee {employee.FirstName} {employee.LastName} because they have processed {employee.Rentals.Count} rental(s) in the system.";
+                TempData["ErrorMessage"] = $"Cannot delete employee {employee.FirstName} {employee.LastName} because they have processed rental(s) in the system.";
                 return RedirectToAction(nameof(Delete), new { id = id });
             }
 
-            _context.Employees.Remove(employee);
-            await _context.SaveChangesAsync();
-            
-            _logger.LogInformation($"Employee deleted: {employee.FirstName} {employee.LastName} (ID: {employee.Id})");
+            await _employeeService.DeleteEmployeeAsync(id);
             TempData["SuccessMessage"] = $"Employee {employee.FirstName} {employee.LastName} has been successfully deleted.";
             
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool EmployeeExists(int id)
-        {
-            return _context.Employees.Any(e => e.Id == id);
         }
     }
 }

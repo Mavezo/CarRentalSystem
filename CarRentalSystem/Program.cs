@@ -1,6 +1,9 @@
 using CarRentalSystem.Entities;
+using CarRentalSystem.Services.Implementations;
+using CarRentalSystem.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using CarRentalSystem.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +12,16 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<CarRentalContext>(
     options => options.UseSqlServer(builder.Configuration.GetConnectionString("CarRentalDB")));
+
+// Register services
+builder.Services.AddScoped<IBrandService, BrandService>();
+builder.Services.AddScoped<IModelService, ModelService>();
+builder.Services.AddScoped<ICarService, CarService>();
+builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<IRentalService, RentalService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 var app = builder.Build();
 
@@ -20,6 +33,9 @@ app.UseRequestLocalization(new RequestLocalizationOptions
     SupportedCultures = supportedCultures,
     SupportedUICultures = supportedCultures
 });
+
+// Use custom exception handling middleware early in the pipeline
+app.UseCustomExceptionHandling();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

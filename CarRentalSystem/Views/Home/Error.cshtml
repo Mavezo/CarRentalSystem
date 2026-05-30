@@ -1,0 +1,35 @@
+@model CarRentalSystem.Models.ErrorViewModel
+
+@{
+    ViewData["Title"] = "Error";
+}
+
+<h1 class="text-danger">An error occurred</h1>
+
+@if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger">
+        <strong>@ViewBag.ErrorMessage</strong>
+    </div>
+}
+
+@if (ViewBag.ErrorDescription != null)
+{
+    <div class="card mt-3">
+        <div class="card-header">Details</div>
+        <div class="card-body">
+            <pre style="white-space:pre-wrap;">@ViewBag.ErrorDescription</pre>
+        </div>
+    </div>
+}
+
+@if (Model?.ShowRequestId == true)
+{
+    <p>
+        <strong>Request ID:</strong> <code>@Model.RequestId</code>
+    </p>
+}
+
+<p>
+    <a href="/">Return to home page</a>
+</p>

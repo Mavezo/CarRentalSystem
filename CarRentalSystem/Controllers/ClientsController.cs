@@ -1,19 +1,17 @@
 using CarRentalSystem.Entities;
 using CarRentalSystem.Entities.Users;
+using CarRentalSystem.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CarRentalSystem.Controllers
 {
     public class ClientsController : Controller
     {
-        private readonly CarRentalContext _context;
-        private readonly ILogger<ClientsController> _logger;
+        private readonly IClientService _clientService;
 
-        public ClientsController(CarRentalContext context, ILogger<ClientsController> logger)
+        public ClientsController(IClientService clientService)
         {
-            _context = context;
-            _logger = logger;
+            _clientService = clientService;
         }
 
         // GET: Clients
@@ -22,39 +20,9 @@ namespace CarRentalSystem.Controllers
             ViewData["CurrentFilter"] = searchString;
             ViewData["SearchType"] = searchType;
 
-            var clients = from c in _context.Clients
-                         select c;
+            var clients = await _clientService.SearchClientsAsync(searchString, searchType);
 
-            if (!string.IsNullOrEmpty(searchString))
-            {
-                switch (searchType)
-                {
-                    case "name":
-                        clients = clients.Where(c => c.FirstName.Contains(searchString) 
-                                                  || c.LastName.Contains(searchString));
-                        break;
-                    case "email":
-                        clients = clients.Where(c => c.Email.Contains(searchString));
-                        break;
-                    case "phone":
-                        clients = clients.Where(c => c.PhoneNumber.Contains(searchString));
-                        break;
-                    case "pesel":
-                        clients = clients.Where(c => c.PESEL.Contains(searchString));
-                        break;
-                    case "city":
-                        clients = clients.Where(c => c.City != null && c.City.Contains(searchString));
-                        break;
-                    default:
-                        clients = clients.Where(c => c.FirstName.Contains(searchString) 
-                                                  || c.LastName.Contains(searchString)
-                                                  || c.Email.Contains(searchString)
-                                                  || c.PhoneNumber.Contains(searchString));
-                        break;
-                }
-            }
-
-            return View(await clients.OrderBy(c => c.LastName).ToListAsync());
+            return View(clients);
         }
 
         // GET: Clients/Details/5
@@ -65,14 +33,7 @@ namespace CarRentalSystem.Controllers
                 return NotFound();
             }
 
-            var client = await _context.Clients
-                .Include(c => c.Rentals!)
-                    .ThenInclude(r => r.Car!.Model!.Brand)
-                .Include(c => c.Rentals!)
-                    .ThenInclude(r => r.Employee)
-                .Include(c => c.Rentals!)
-                    .ThenInclude(r => r.Payments)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var client = await _clientService.GetClientWithRentalsAsync(id.Value);
 
             if (client == null)
             {
@@ -95,24 +56,19 @@ namespace CarRentalSystem.Controllers
         {
             if (ModelState.IsValid)
             {
-                // Check if email already exists
-                if (await _context.Clients.AnyAsync(c => c.Email == client.Email))
+                if (await _clientService.EmailExistsAsync(client.Email))
                 {
                     ModelState.AddModelError("Email", "A client with this email already exists.");
                     return View(client);
                 }
 
-                // Check if PESEL already exists
-                if (await _context.Clients.AnyAsync(c => c.PESEL == client.PESEL))
+                if (await _clientService.PeselExistsAsync(client.PESEL))
                 {
                     ModelState.AddModelError("PESEL", "A client with this PESEL already exists.");
                     return View(client);
                 }
 
-                _context.Add(client);
-                await _context.SaveChangesAsync();
-                
-                _logger.LogInformation($"New client created: {client.FirstName} {client.LastName} (ID: {client.Id})");
+                await _clientService.CreateClientAsync(client);
                 TempData["SuccessMessage"] = $"Client {client.FirstName} {client.LastName} has been successfully created.";
                 
                 return RedirectToAction(nameof(Index));
@@ -128,7 +84,7 @@ namespace CarRentalSystem.Controllers
                 return NotFound();
             }
 
-            var client = await _context.Clients.FindAsync(id);
+            var client = await _clientService.GetClientByIdAsync(id.Value);
             if (client == null)
             {
                 return NotFound();
@@ -148,45 +104,20 @@ namespace CarRentalSystem.Controllers
 
             if (ModelState.IsValid)
             {
-                try
+                if (await _clientService.EmailExistsAsync(client.Email, id))
                 {
-                    // Check if email is being changed and if it's already taken by another client
-                    var existingEmailClient = await _context.Clients
-                        .FirstOrDefaultAsync(c => c.Email == client.Email && c.Id != client.Id);
-                    
-                    if (existingEmailClient != null)
-                    {
-                        ModelState.AddModelError("Email", "A client with this email already exists.");
-                        return View(client);
-                    }
-
-                    // Check if PESEL is being changed and if it's already taken by another client
-                    var existingPeselClient = await _context.Clients
-                        .FirstOrDefaultAsync(c => c.PESEL == client.PESEL && c.Id != client.Id);
-                    
-                    if (existingPeselClient != null)
-                    {
-                        ModelState.AddModelError("PESEL", "A client with this PESEL already exists.");
-                        return View(client);
-                    }
-
-                    _context.Update(client);
-                    await _context.SaveChangesAsync();
-                    
-                    _logger.LogInformation($"Client updated: {client.FirstName} {client.LastName} (ID: {client.Id})");
-                    TempData["SuccessMessage"] = $"Client {client.FirstName} {client.LastName} has been successfully updated.";
+                    ModelState.AddModelError("Email", "A client with this email already exists.");
+                    return View(client);
                 }
-                catch (DbUpdateConcurrencyException)
+
+                if (await _clientService.PeselExistsAsync(client.PESEL, id))
                 {
-                    if (!ClientExists(client.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    ModelState.AddModelError("PESEL", "A client with this PESEL already exists.");
+                    return View(client);
                 }
+
+                await _clientService.UpdateClientAsync(client);
+                TempData["SuccessMessage"] = $"Client {client.FirstName} {client.LastName} has been successfully updated.";
                 return RedirectToAction(nameof(Index));
             }
             return View(client);
@@ -200,9 +131,7 @@ namespace CarRentalSystem.Controllers
                 return NotFound();
             }
 
-            var client = await _context.Clients
-                .Include(c => c.Rentals)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var client = await _clientService.GetClientWithRentalsAsync(id.Value);
             
             if (client == null)
             {
@@ -217,34 +146,23 @@ namespace CarRentalSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var client = await _context.Clients
-                .Include(c => c.Rentals)
-                .FirstOrDefaultAsync(c => c.Id == id);
+            var client = await _clientService.GetClientByIdAsync(id);
             
             if (client == null)
             {
                 return NotFound();
             }
 
-            // Check if client has any rentals
-            if (client.Rentals != null && client.Rentals.Any())
+            if (!await _clientService.CanDeleteClientAsync(id))
             {
-                TempData["ErrorMessage"] = $"Cannot delete client {client.FirstName} {client.LastName} because they have {client.Rentals.Count} rental(s) in the system.";
+                TempData["ErrorMessage"] = $"Cannot delete client {client.FirstName} {client.LastName} because they have rental(s) in the system.";
                 return RedirectToAction(nameof(Delete), new { id = id });
             }
 
-            _context.Clients.Remove(client);
-            await _context.SaveChangesAsync();
-            
-            _logger.LogInformation($"Client deleted: {client.FirstName} {client.LastName} (ID: {client.Id})");
+            await _clientService.DeleteClientAsync(id);
             TempData["SuccessMessage"] = $"Client {client.FirstName} {client.LastName} has been successfully deleted.";
             
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool ClientExists(int id)
-        {
-            return _context.Clients.Any(e => e.Id == id);
         }
     }
 }

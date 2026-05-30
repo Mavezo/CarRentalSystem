@@ -1,19 +1,15 @@
-using CarRentalSystem.Entities;
-using CarRentalSystem.Entities.Vehicles;
+using CarRentalSystem.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CarRentalSystem.Controllers
 {
     public class BrandsController : Controller
     {
-        private readonly CarRentalContext _context;
-        private readonly ILogger<BrandsController> _logger;
+        private readonly IBrandService _brandService;
 
-        public BrandsController(CarRentalContext context, ILogger<BrandsController> logger)
+        public BrandsController(IBrandService brandService)
         {
-            _context = context;
-            _logger = logger;
+            _brandService = brandService;
         }
 
         // GET: Brands
@@ -24,42 +20,12 @@ namespace CarRentalSystem.Controllers
             ViewData["BodyType"] = bodyType;
 
             // Get distinct countries and body types for filters
-            ViewBag.Countries = await _context.Brands
-                .Where(b => !string.IsNullOrEmpty(b.Country))
-                .Select(b => b.Country)
-                .Distinct()
-                .OrderBy(c => c)
-                .ToListAsync();
+            ViewBag.Countries = await _brandService.GetDistinctCountriesAsync();
+            ViewBag.BodyTypes = await _brandService.GetDistinctBodyTypesAsync();
 
-            ViewBag.BodyTypes = await _context.Brands
-                .Where(b => !string.IsNullOrEmpty(b.BodyType))
-                .Select(b => b.BodyType)
-                .Distinct()
-                .OrderBy(b => b)
-                .ToListAsync();
+            var brands = await _brandService.SearchBrandsAsync(searchString, country, bodyType);
 
-            var brands = _context.Brands
-                .Include(b => b.Models)
-                .AsQueryable();
-
-            // Apply filters
-            if (!string.IsNullOrEmpty(searchString))
-            {
-                brands = brands.Where(b => b.BrandName.Contains(searchString) 
-                                        || (b.Country != null && b.Country.Contains(searchString)));
-            }
-
-            if (!string.IsNullOrEmpty(country))
-            {
-                brands = brands.Where(b => b.Country == country);
-            }
-
-            if (!string.IsNullOrEmpty(bodyType))
-            {
-                brands = brands.Where(b => b.BodyType == bodyType);
-            }
-
-            return View(await brands.OrderBy(b => b.BrandName).ToListAsync());
+            return View(brands);
         }
 
         // GET: Brands/Details/5
@@ -70,26 +36,12 @@ namespace CarRentalSystem.Controllers
                 return NotFound();
             }
 
-            var brand = await _context.Brands
-                .Include(b => b.Models)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var brand = await _brandService.GetBrandWithModelsAsync(id.Value);
 
             if (brand == null)
             {
                 return NotFound();
             }
-
-            // Get cars count for each model
-            var modelCounts = await _context.Models
-                .Where(m => m.BrandId == id)
-                .Select(m => new
-                {
-                    ModelId = m.Id,
-                    CarsCount = _context.Cars.Count(c => c.ModelId == m.Id)
-                })
-                .ToListAsync();
-
-            ViewBag.ModelCounts = modelCounts.ToDictionary(m => m.ModelId, m => m.CarsCount);
 
             return View(brand);
         }
@@ -103,21 +55,17 @@ namespace CarRentalSystem.Controllers
         // POST: Brands/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,BrandName,Country,BodyType,Year,Transmission")] Brand brand)
+        public async Task<IActionResult> Create([Bind("Id,BrandName,Country,BodyType,Year,Transmission")] CarRentalSystem.Entities.Vehicles.Brand brand)
         {
             if (ModelState.IsValid)
             {
-                // Check if brand name already exists
-                if (await _context.Brands.AnyAsync(b => b.BrandName == brand.BrandName))
+                if (await _brandService.BrandNameExistsAsync(brand.BrandName))
                 {
                     ModelState.AddModelError("BrandName", "A brand with this name already exists.");
                     return View(brand);
                 }
 
-                _context.Add(brand);
-                await _context.SaveChangesAsync();
-                
-                _logger.LogInformation($"New brand created: {brand.BrandName} (ID: {brand.Id})");
+                await _brandService.CreateBrandAsync(brand);
                 TempData["SuccessMessage"] = $"Brand '{brand.BrandName}' has been successfully added.";
                 
                 return RedirectToAction(nameof(Index));
@@ -133,7 +81,7 @@ namespace CarRentalSystem.Controllers
                 return NotFound();
             }
 
-            var brand = await _context.Brands.FindAsync(id);
+            var brand = await _brandService.GetBrandByIdAsync(id.Value);
             if (brand == null)
             {
                 return NotFound();
@@ -144,7 +92,7 @@ namespace CarRentalSystem.Controllers
         // POST: Brands/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,BrandName,Country,BodyType,Year,Transmission")] Brand brand)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,BrandName,Country,BodyType,Year,Transmission")] CarRentalSystem.Entities.Vehicles.Brand brand)
         {
             if (id != brand.Id)
             {
@@ -153,35 +101,14 @@ namespace CarRentalSystem.Controllers
 
             if (ModelState.IsValid)
             {
-                try
+                if (await _brandService.BrandNameExistsAsync(brand.BrandName, id))
                 {
-                    // Check if brand name is being changed and if it's already taken by another brand
-                    var existingBrand = await _context.Brands
-                        .FirstOrDefaultAsync(b => b.BrandName == brand.BrandName && b.Id != brand.Id);
-                    
-                    if (existingBrand != null)
-                    {
-                        ModelState.AddModelError("BrandName", "A brand with this name already exists.");
-                        return View(brand);
-                    }
+                    ModelState.AddModelError("BrandName", "A brand with this name already exists.");
+                    return View(brand);
+                }
 
-                    _context.Update(brand);
-                    await _context.SaveChangesAsync();
-                    
-                    _logger.LogInformation($"Brand updated: {brand.BrandName} (ID: {brand.Id})");
-                    TempData["SuccessMessage"] = $"Brand '{brand.BrandName}' has been successfully updated.";
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!BrandExists(brand.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                await _brandService.UpdateBrandAsync(brand);
+                TempData["SuccessMessage"] = $"Brand '{brand.BrandName}' has been successfully updated.";
                 return RedirectToAction(nameof(Index));
             }
             return View(brand);
@@ -195,9 +122,7 @@ namespace CarRentalSystem.Controllers
                 return NotFound();
             }
 
-            var brand = await _context.Brands
-                .Include(b => b.Models)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var brand = await _brandService.GetBrandWithModelsAsync(id.Value);
             
             if (brand == null)
             {
@@ -212,34 +137,19 @@ namespace CarRentalSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var brand = await _context.Brands
-                .Include(b => b.Models)
-                .FirstOrDefaultAsync(b => b.Id == id);
-            
-            if (brand == null)
+            if (!await _brandService.CanDeleteBrandAsync(id))
             {
-                return NotFound();
-            }
-
-            // Check if brand has any models
-            if (brand.Models != null && brand.Models.Any())
-            {
-                TempData["ErrorMessage"] = $"Cannot delete brand '{brand.BrandName}' because it has {brand.Models.Count} model(s) associated with it. Please delete the models first.";
+                var brand = await _brandService.GetBrandByIdAsync(id);
+                var modelsCount = await _brandService.GetModelsCountAsync(id);
+                TempData["ErrorMessage"] = $"Cannot delete brand '{brand?.BrandName}' because it has {modelsCount} model(s) associated with it. Please delete the models first.";
                 return RedirectToAction(nameof(Delete), new { id = id });
             }
 
-            _context.Brands.Remove(brand);
-            await _context.SaveChangesAsync();
-            
-            _logger.LogInformation($"Brand deleted: {brand.BrandName} (ID: {brand.Id})");
-            TempData["SuccessMessage"] = $"Brand '{brand.BrandName}' has been successfully deleted.";
+            var deletedBrand = await _brandService.GetBrandByIdAsync(id);
+            await _brandService.DeleteBrandAsync(id);
+            TempData["SuccessMessage"] = $"Brand '{deletedBrand?.BrandName}' has been successfully deleted.";
             
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool BrandExists(int id)
-        {
-            return _context.Brands.Any(e => e.Id == id);
         }
     }
 }
