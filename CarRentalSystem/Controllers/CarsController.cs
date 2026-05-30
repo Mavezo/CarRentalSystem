@@ -1,6 +1,7 @@
 using CarRentalSystem.Entities;
 using CarRentalSystem.Entities.Vehicles;
 using CarRentalSystem.Services.Interfaces;
+using CarRentalSystem.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -72,8 +73,10 @@ namespace CarRentalSystem.Controllers
         // POST: Cars/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,ModelId,RegistrationNumber,Mileage,AvailabilityStatus,DailyPrice,Location")] Car car)
+        public async Task<IActionResult> Create(CarFormModel formModel)
         {
+            var car = formModel.ToEntity();
+
             if (ModelState.IsValid)
             {
                 if (await _carService.RegistrationNumberExistsAsync(car.RegistrationNumber))
@@ -124,8 +127,10 @@ namespace CarRentalSystem.Controllers
         // POST: Cars/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ModelId,RegistrationNumber,Mileage,AvailabilityStatus,DailyPrice,Location")] Car car)
+        public async Task<IActionResult> Edit(int id, CarFormModel formModel)
         {
+            var car = formModel.ToEntity();
+
             if (id != car.Id)
             {
                 return NotFound();

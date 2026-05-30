@@ -1,6 +1,7 @@
 using CarRentalSystem.Entities;
 using CarRentalSystem.Entities.Users;
 using CarRentalSystem.Services.Interfaces;
+using CarRentalSystem.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CarRentalSystem.Controllers
@@ -52,8 +53,10 @@ namespace CarRentalSystem.Controllers
         // POST: Clients/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,PESEL,PhoneNumber,Email,City,PostalCode")] Client client)
+        public async Task<IActionResult> Create(ClientFormModel formModel)
         {
+            var client = formModel.ToEntity();
+
             if (ModelState.IsValid)
             {
                 if (await _clientService.EmailExistsAsync(client.Email))
@@ -95,8 +98,10 @@ namespace CarRentalSystem.Controllers
         // POST: Clients/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,FirstName,LastName,PESEL,PhoneNumber,Email,City,PostalCode")] Client client)
+        public async Task<IActionResult> Edit(int id, ClientFormModel formModel)
         {
+            var client = formModel.ToEntity();
+
             if (id != client.Id)
             {
                 return NotFound();

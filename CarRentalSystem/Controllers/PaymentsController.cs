@@ -1,6 +1,7 @@
 using CarRentalSystem.Entities;
 using CarRentalSystem.Entities.Rentals;
 using CarRentalSystem.Services.Interfaces;
+using CarRentalSystem.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -79,8 +80,10 @@ namespace CarRentalSystem.Controllers
         // POST: Payments/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,RentalId,PaymentDate,Amount,PaymentMethod,Status")] Payment payment)
+        public async Task<IActionResult> Create(PaymentFormModel formModel)
         {
+            var payment = formModel.ToEntity();
+
             if (ModelState.IsValid)
             {
                 // Validate rental exists
@@ -132,8 +135,10 @@ namespace CarRentalSystem.Controllers
         // POST: Payments/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,RentalId,PaymentDate,Amount,PaymentMethod,Status")] Payment payment)
+        public async Task<IActionResult> Edit(int id, PaymentFormModel formModel)
         {
+            var payment = formModel.ToEntity();
+
             if (id != payment.Id)
             {
                 return NotFound();

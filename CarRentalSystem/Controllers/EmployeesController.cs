@@ -1,6 +1,7 @@
 using CarRentalSystem.Entities;
 using CarRentalSystem.Entities.Users;
 using CarRentalSystem.Services.Interfaces;
+using CarRentalSystem.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CarRentalSystem.Controllers
@@ -52,8 +53,10 @@ namespace CarRentalSystem.Controllers
         // POST: Employees/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,Position,HireDate,Salary,Phone")] Employee employee)
+        public async Task<IActionResult> Create(EmployeeFormModel formModel)
         {
+            var employee = formModel.ToEntity();
+
             if (ModelState.IsValid)
             {
                 if (await _employeeService.PhoneExistsAsync(employee.Phone))
@@ -89,8 +92,10 @@ namespace CarRentalSystem.Controllers
         // POST: Employees/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,FirstName,LastName,Position,HireDate,Salary,Phone")] Employee employee)
+        public async Task<IActionResult> Edit(int id, EmployeeFormModel formModel)
         {
+            var employee = formModel.ToEntity();
+
             if (id != employee.Id)
             {
                 return NotFound();
