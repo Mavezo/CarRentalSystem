@@ -1,21 +1,26 @@
 using CarRentalSystem.Entities;
 using CarRentalSystem.Entities.Rentals;
 using CarRentalSystem.Entities.Vehicles;
+using CarRentalSystem.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 
 namespace CarRentalSystem.Controllers
 {
     public class RentalsController : Controller
     {
-        private readonly CarRentalContext _context;
-        private readonly ILogger<RentalsController> _logger;
+        private readonly IRentalService _rentalService;
+        private readonly ICarService _carService;
+        private readonly IClientService _clientService;
+        private readonly IEmployeeService _employeeService;
 
-        public RentalsController(CarRentalContext context, ILogger<RentalsController> logger)
+        public RentalsController(IRentalService rentalService, ICarService carService, 
+            IClientService clientService, IEmployeeService employeeService)
         {
-            _context = context;
-            _logger = logger;
+            _rentalService = rentalService;
+            _carService = carService;
+            _clientService = clientService;
+            _employeeService = employeeService;
         }
 
         // GET: Rentals
@@ -28,42 +33,9 @@ namespace CarRentalSystem.Controllers
             ViewData["ClientId"] = clientId;
             ViewData["CarId"] = carId;
 
-            var rentals = _context.Rentals
-                .Include(r => r.Client)
-                .Include(r => r.Car)
-                    .ThenInclude(c => c!.Model)
-                        .ThenInclude(m => m!.Brand)
-                .Include(r => r.Employee)
-                .Include(r => r.Payments)
-                .AsQueryable();
+            var rentals = await _rentalService.SearchRentalsAsync(status, startDate, endDate, clientId, carId);
 
-            // Apply filters
-            if (status.HasValue)
-            {
-                rentals = rentals.Where(r => r.Status == status);
-            }
-
-            if (startDate.HasValue)
-            {
-                rentals = rentals.Where(r => r.RentalDate >= startDate);
-            }
-
-            if (endDate.HasValue)
-            {
-                rentals = rentals.Where(r => r.ReturnDate <= endDate);
-            }
-
-            if (clientId.HasValue)
-            {
-                rentals = rentals.Where(r => r.ClientId == clientId);
-            }
-
-            if (carId.HasValue)
-            {
-                rentals = rentals.Where(r => r.CarId == carId);
-            }
-
-            return View(await rentals.OrderByDescending(r => r.RentalDate).ToListAsync());
+            return View(rentals);
         }
 
         // GET: Rentals/Details/5
@@ -74,16 +46,7 @@ namespace CarRentalSystem.Controllers
                 return NotFound();
             }
 
-            var rental = await _context.Rentals
-                .Include(r => r.Client)
-                .Include(r => r.Car)
-                    .ThenInclude(c => c!.Model)
-                        .ThenInclude(m => m!.Brand)
-                .Include(r => r.Car)
-                    .ThenInclude(c => c!.Insurance)
-                .Include(r => r.Employee)
-                .Include(r => r.Payments)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var rental = await _rentalService.GetRentalWithDetailsAsync(id.Value);
 
             if (rental == null)
             {
@@ -113,7 +76,7 @@ namespace CarRentalSystem.Controllers
             if (carId.HasValue)
             {
                 rental.CarId = carId.Value;
-                var car = await _context.Cars.FindAsync(carId.Value);
+                var car = await _carService.GetCarByIdAsync(carId.Value);
                 if (car != null)
                 {
                     ViewData["DailyPrice"] = car.DailyPrice;
@@ -131,10 +94,7 @@ namespace CarRentalSystem.Controllers
             if (ModelState.IsValid)
             {
                 // Check if car is available
-                var car = await _context.Cars
-                    .Include(c => c.Model)
-                        .ThenInclude(m => m!.Brand)
-                    .FirstOrDefaultAsync(c => c.Id == rental.CarId);
+                var car = await _carService.GetCarByIdAsync(rental.CarId);
 
                 if (car == null)
                 {
@@ -159,16 +119,7 @@ namespace CarRentalSystem.Controllers
                 }
 
                 // Check for overlapping rentals
-                var hasOverlap = await _context.Rentals
-                    .Where(r => r.CarId == rental.CarId && 
-                               r.Status != RentalStatus.Cancelled &&
-                               r.Status != RentalStatus.Completed)
-                    .AnyAsync(r => 
-                        (rental.RentalDate >= r.RentalDate && rental.RentalDate < r.ReturnDate) ||
-                        (rental.ReturnDate > r.RentalDate && rental.ReturnDate <= r.ReturnDate) ||
-                        (rental.RentalDate <= r.RentalDate && rental.ReturnDate >= r.ReturnDate));
-
-                if (hasOverlap)
+                if (await _rentalService.HasOverlappingRentalsAsync(rental.CarId, rental.RentalDate, rental.ReturnDate.Value))
                 {
                     ModelState.AddModelError("", "This car has overlapping rental dates.");
                     await PopulateDropdownsAsync(rental.ClientId, rental.CarId);
@@ -185,10 +136,7 @@ namespace CarRentalSystem.Controllers
                     car.AvailabilityStatus = CarAvailability.Reserved;
                 }
 
-                _context.Add(rental);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation($"New rental created: ID {rental.Id}, Car: {car.Model?.Brand?.BrandName} {car.Model?.ModelName}, Client ID: {rental.ClientId}");
+                await _rentalService.CreateRentalAsync(rental);
                 TempData["SuccessMessage"] = $"Rental successfully created for {car.Model?.Brand?.BrandName} {car.Model?.ModelName}";
 
                 return RedirectToAction(nameof(Details), new { id = rental.Id });
@@ -206,11 +154,7 @@ namespace CarRentalSystem.Controllers
                 return NotFound();
             }
 
-            var rental = await _context.Rentals
-                .Include(r => r.Car)
-                    .ThenInclude(c => c!.Model)
-                        .ThenInclude(m => m!.Brand)
-                .FirstOrDefaultAsync(r => r.Id == id);
+            var rental = await _rentalService.GetRentalByIdAsync(id.Value);
 
             if (rental == null)
             {
@@ -233,77 +177,57 @@ namespace CarRentalSystem.Controllers
 
             if (ModelState.IsValid)
             {
-                try
+                var existingRental = await _rentalService.GetRentalByIdAsync(id);
+
+                if (existingRental == null)
                 {
-                    var existingRental = await _context.Rentals
-                        .Include(r => r.Car)
-                        .FirstOrDefaultAsync(r => r.Id == id);
-
-                    if (existingRental == null)
-                    {
-                        return NotFound();
-                    }
-
-                    var oldStatus = existingRental.Status;
-                    var car = existingRental.Car;
-
-                    // Check date validity
-                    if (rental.ReturnDate <= rental.RentalDate)
-                    {
-                        ModelState.AddModelError("ReturnDate", "Return date must be after rental date.");
-                        await PopulateDropdownsAsync(rental.ClientId, rental.CarId);
-                        return View(rental);
-                    }
-
-                    // Update rental
-                    existingRental.ClientId = rental.ClientId;
-                    existingRental.EmployeeId = rental.EmployeeId;
-                    existingRental.RentalDate = rental.RentalDate;
-                    existingRental.ReturnDate = rental.ReturnDate;
-                    existingRental.Status = rental.Status;
-
-                    // Update car status if rental status changed
-                    if (oldStatus != rental.Status && car != null)
-                    {
-                        if (rental.Status == RentalStatus.Active)
-                        {
-                            car.AvailabilityStatus = CarAvailability.Rented;
-                        }
-                        else if (rental.Status == RentalStatus.Reserved)
-                        {
-                            car.AvailabilityStatus = CarAvailability.Reserved;
-                        }
-                        else if (rental.Status == RentalStatus.Completed || rental.Status == RentalStatus.Cancelled)
-                        {
-                            // Check if there are other active/reserved rentals for this car
-                            var hasOtherRentals = await _context.Rentals
-                                .AnyAsync(r => r.CarId == car.Id && 
-                                             r.Id != rental.Id &&
-                                             (r.Status == RentalStatus.Active || r.Status == RentalStatus.Reserved));
-
-                            if (!hasOtherRentals)
-                            {
-                                car.AvailabilityStatus = CarAvailability.Available;
-                            }
-                        }
-                    }
-
-                    await _context.SaveChangesAsync();
-
-                    _logger.LogInformation($"Rental updated: ID {rental.Id}, New status: {rental.Status}");
-                    TempData["SuccessMessage"] = "Rental successfully updated.";
+                    return NotFound();
                 }
-                catch (DbUpdateConcurrencyException)
+
+                var oldStatus = existingRental.Status;
+                var car = await _carService.GetCarByIdAsync(existingRental.CarId);
+
+                // Check date validity
+                if (rental.ReturnDate <= rental.RentalDate)
                 {
-                    if (!RentalExists(rental.Id))
+                    ModelState.AddModelError("ReturnDate", "Return date must be after rental date.");
+                    await PopulateDropdownsAsync(rental.ClientId, rental.CarId);
+                    return View(rental);
+                }
+
+                // Update rental
+                existingRental.ClientId = rental.ClientId;
+                existingRental.EmployeeId = rental.EmployeeId;
+                existingRental.RentalDate = rental.RentalDate;
+                existingRental.ReturnDate = rental.ReturnDate;
+                existingRental.Status = rental.Status;
+
+                // Update car status if rental status changed
+                if (oldStatus != rental.Status && car != null)
+                {
+                    if (rental.Status == RentalStatus.Active)
                     {
-                        return NotFound();
+                        car.AvailabilityStatus = CarAvailability.Rented;
                     }
-                    else
+                    else if (rental.Status == RentalStatus.Reserved)
                     {
-                        throw;
+                        car.AvailabilityStatus = CarAvailability.Reserved;
+                    }
+                    else if (rental.Status == RentalStatus.Completed || rental.Status == RentalStatus.Cancelled)
+                    {
+                        var hasOtherRentals = await _rentalService.SearchRentalsAsync(null, null, null, null, car.Id);
+                        var activeRentals = hasOtherRentals.Where(r => r.Id != rental.Id && 
+                            (r.Status == RentalStatus.Active || r.Status == RentalStatus.Reserved)).Any();
+
+                        if (!activeRentals)
+                        {
+                            car.AvailabilityStatus = CarAvailability.Available;
+                        }
                     }
                 }
+
+                await _rentalService.UpdateRentalAsync(existingRental);
+                TempData["SuccessMessage"] = "Rental successfully updated.";
                 return RedirectToAction(nameof(Details), new { id = rental.Id });
             }
 
@@ -319,14 +243,7 @@ namespace CarRentalSystem.Controllers
                 return NotFound();
             }
 
-            var rental = await _context.Rentals
-                .Include(r => r.Client)
-                .Include(r => r.Car)
-                    .ThenInclude(c => c!.Model)
-                        .ThenInclude(m => m!.Brand)
-                .Include(r => r.Employee)
-                .Include(r => r.Payments)
-                .FirstOrDefaultAsync(r => r.Id == id);
+            var rental = await _rentalService.GetRentalWithDetailsAsync(id.Value);
 
             if (rental == null)
             {
@@ -347,37 +264,12 @@ namespace CarRentalSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReturnConfirmed(int id)
         {
-            var rental = await _context.Rentals
-                .Include(r => r.Car)
-                .FirstOrDefaultAsync(r => r.Id == id);
-
-            if (rental == null)
+            if (!await _rentalService.CompleteRentalAsync(id))
             {
                 return NotFound();
             }
 
-            rental.Status = RentalStatus.Completed;
-            rental.ReturnDate = DateTime.Now;
-
-            if (rental.Car != null)
-            {
-                // Check if there are other active/reserved rentals for this car
-                var hasOtherRentals = await _context.Rentals
-                    .AnyAsync(r => r.CarId == rental.CarId && 
-                                 r.Id != rental.Id &&
-                                 (r.Status == RentalStatus.Active || r.Status == RentalStatus.Reserved));
-
-                if (!hasOtherRentals)
-                {
-                    rental.Car.AvailabilityStatus = CarAvailability.Available;
-                }
-            }
-
-            await _context.SaveChangesAsync();
-
-            _logger.LogInformation($"Rental returned: ID {rental.Id}");
             TempData["SuccessMessage"] = "Car successfully returned.";
-
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -389,20 +281,14 @@ namespace CarRentalSystem.Controllers
                 return NotFound();
             }
 
-            var rental = await _context.Rentals
-                .Include(r => r.Client)
-                .Include(r => r.Car)
-                    .ThenInclude(c => c!.Model)
-                        .ThenInclude(m => m!.Brand)
-                .Include(r => r.Employee)
-                .FirstOrDefaultAsync(r => r.Id == id);
+            var rental = await _rentalService.GetRentalWithDetailsAsync(id.Value);
 
             if (rental == null)
             {
                 return NotFound();
             }
 
-            if (rental.Status == RentalStatus.Completed || rental.Status == RentalStatus.Cancelled)
+            if (!await _rentalService.CanCancelRentalAsync(id.Value))
             {
                 TempData["ErrorMessage"] = "Cannot cancel completed or already cancelled rentals.";
                 return RedirectToAction(nameof(Details), new { id });
@@ -416,36 +302,12 @@ namespace CarRentalSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CancelConfirmed(int id)
         {
-            var rental = await _context.Rentals
-                .Include(r => r.Car)
-                .FirstOrDefaultAsync(r => r.Id == id);
-
-            if (rental == null)
+            if (!await _rentalService.CancelRentalAsync(id))
             {
                 return NotFound();
             }
 
-            rental.Status = RentalStatus.Cancelled;
-
-            if (rental.Car != null)
-            {
-                // Check if there are other active/reserved rentals for this car
-                var hasOtherRentals = await _context.Rentals
-                    .AnyAsync(r => r.CarId == rental.CarId && 
-                                 r.Id != rental.Id &&
-                                 (r.Status == RentalStatus.Active || r.Status == RentalStatus.Reserved));
-
-                if (!hasOtherRentals)
-                {
-                    rental.Car.AvailabilityStatus = CarAvailability.Available;
-                }
-            }
-
-            await _context.SaveChangesAsync();
-
-            _logger.LogInformation($"Rental cancelled: ID {rental.Id}");
             TempData["SuccessMessage"] = "Rental successfully cancelled.";
-
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -457,14 +319,7 @@ namespace CarRentalSystem.Controllers
                 return NotFound();
             }
 
-            var rental = await _context.Rentals
-                .Include(r => r.Client)
-                .Include(r => r.Car)
-                    .ThenInclude(c => c!.Model)
-                        .ThenInclude(m => m!.Brand)
-                .Include(r => r.Employee)
-                .Include(r => r.Payments)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var rental = await _rentalService.GetRentalWithDetailsAsync(id.Value);
 
             if (rental == null)
             {
@@ -479,83 +334,55 @@ namespace CarRentalSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var rental = await _context.Rentals
-                .Include(r => r.Payments)
-                .FirstOrDefaultAsync(r => r.Id == id);
-
-            if (rental == null)
+            if (!await _rentalService.CanDeleteRentalAsync(id))
             {
-                return NotFound();
-            }
-
-            // Check if rental has payments
-            if (rental.Payments != null && rental.Payments.Any())
-            {
-                TempData["ErrorMessage"] = $"Cannot delete rental because it has {rental.Payments.Count} associated payment(s). Please delete the payments first.";
+                TempData["ErrorMessage"] = $"Cannot delete rental because it has associated payment(s). Please delete the payments first.";
                 return RedirectToAction(nameof(Delete), new { id });
             }
 
-            _context.Rentals.Remove(rental);
-            await _context.SaveChangesAsync();
-
-            _logger.LogInformation($"Rental deleted: ID {rental.Id}");
+            await _rentalService.DeleteRentalAsync(id);
             TempData["SuccessMessage"] = "Rental successfully deleted.";
 
             return RedirectToAction(nameof(Index));
         }
 
-        private bool RentalExists(int id)
-        {
-            return _context.Rentals.Any(e => e.Id == id);
-        }
-
         private async Task PopulateDropdownsAsync(int? selectedClientId = null, int? selectedCarId = null)
         {
             // Clients dropdown
+            var clients = await _clientService.GetAllClientsAsync();
             ViewData["ClientId"] = new SelectList(
-                await _context.Clients
-                    .OrderBy(c => c.LastName)
-                    .ThenBy(c => c.FirstName)
-                    .Select(c => new
-                    {
-                        c.Id,
-                        FullName = c.FirstName + " " + c.LastName + " (" + c.Email + ")"
-                    })
-                    .ToListAsync(),
+                clients.Select(c => new
+                {
+                    c.Id,
+                    FullName = c.FirstName + " " + c.LastName + " (" + c.Email + ")"
+                }),
                 "Id",
                 "FullName",
                 selectedClientId);
 
             // Available cars dropdown
+            var allCars = await _carService.GetAllCarsAsync();
+            var availableCars = allCars.Where(c => c.AvailabilityStatus == CarAvailability.Available || c.Id == selectedCarId).ToList();
+            
             ViewData["CarId"] = new SelectList(
-                await _context.Cars
-                    .Include(c => c.Model)
-                        .ThenInclude(m => m!.Brand)
-                    .Where(c => c.AvailabilityStatus == CarAvailability.Available || c.Id == selectedCarId)
-                    .OrderBy(c => c.Model!.Brand!.BrandName)
-                    .ThenBy(c => c.Model!.ModelName)
-                    .Select(c => new
-                    {
-                        c.Id,
-                        CarInfo = c.Model!.Brand!.BrandName + " " + c.Model.ModelName + 
-                                 " (" + c.RegistrationNumber + ") - " + c.DailyPrice + " PLN/day"
-                    })
-                    .ToListAsync(),
+                availableCars.Select(c => new
+                {
+                    c.Id,
+                    CarInfo = c.Model!.Brand!.BrandName + " " + c.Model.ModelName + 
+                             " (" + c.RegistrationNumber + ") - " + c.DailyPrice + " PLN/day"
+                }),
                 "Id",
                 "CarInfo",
                 selectedCarId);
 
             // Employees dropdown
+            var employees = await _employeeService.GetAllEmployeesAsync();
             ViewData["EmployeeId"] = new SelectList(
-                await _context.Employees
-                    .OrderBy(e => e.LastName)
-                    .ThenBy(e => e.FirstName)
-                    .Select(e => new
-                    {
-                        e.Id,
-                        FullName = e.FirstName + " " + e.LastName + " - " + e.Position
-                    })
-                    .ToListAsync(),
+                employees.Select(e => new
+                {
+                    e.Id,
+                    FullName = e.FirstName + " " + e.LastName + " - " + e.Position
+                }),
                 "Id",
                 "FullName");
         }

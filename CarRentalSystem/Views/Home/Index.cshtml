@@ -207,9 +207,9 @@
             <div class="card shadow h-100">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-chart-line"></i> Daily Revenue Overview - January 2026
+                        <i class="fas fa-chart-line"></i> Daily Revenue Overview - @Model.CurrentDate.ToString("MMMM yyyy")
                     </h6>
-                    <small class="text-muted">Current: Jan 15, 2026 | Monthly: @Model.MonthlyRevenue.ToString("C")</small>
+                    <small class="text-muted">Current: @Model.CurrentDate.ToString("MMM d, yyyy") | Monthly: @Model.MonthlyRevenue.ToString("C")</small>
                 </div>
                 <div class="card-body" style="position: relative; height: 400px;">
                     <canvas id="revenueChart"></canvas>
@@ -302,10 +302,16 @@
         // Prepare daily revenue data from server
         var dailyLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DailyLabels));
         var dailyData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DailyRevenueData));
-        
+        var currentDate = new Date(@Model.CurrentDate.Year, @(Model.CurrentDate.Month - 1), @Model.CurrentDate.Day);
+        var monthYear = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        var startDay = 1;
+        var endDay = @Model.CurrentDate.Day;
+        var chartTitle = 'Daily Revenue Overview - ' + monthYear.split(' ')[0] + ' ' + startDay + '-' + endDay + ', ' + currentDate.getFullYear();
+
         console.log('Daily Labels:', dailyLabels);
         console.log('Daily Data:', dailyData);
         console.log('Data length:', dailyLabels.length, dailyData.length);
+        console.log('Chart Title:', chartTitle);
         
         // Check if data exists
         if (!dailyLabels || dailyLabels.length === 0 || !dailyData || dailyData.length === 0) {
@@ -333,7 +339,7 @@
                         data: {
                             labels: dailyLabels,
                             datasets: [{
-                                label: 'Daily Revenue (January 2026)',
+                                label: 'Daily Revenue (' + monthYear + ')',
                                 data: dailyData,
                                 backgroundColor: 'rgba(102, 126, 234, 0.1)',
                                 borderColor: 'rgba(102, 126, 234, 1)',
@@ -372,7 +378,7 @@
                                 },
                                 title: {
                                     display: true,
-                                    text: 'Daily Revenue Overview - January 1-15, 2026',
+                                    text: chartTitle,
                                     font: {
                                         size: 16
                                     }

@@ -1,20 +1,20 @@
 using CarRentalSystem.Entities;
 using CarRentalSystem.Entities.Rentals;
+using CarRentalSystem.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 
 namespace CarRentalSystem.Controllers
 {
     public class PaymentsController : Controller
     {
-        private readonly CarRentalContext _context;
-        private readonly ILogger<PaymentsController> _logger;
+        private readonly IPaymentService _paymentService;
+        private readonly IRentalService _rentalService;
 
-        public PaymentsController(CarRentalContext context, ILogger<PaymentsController> logger)
+        public PaymentsController(IPaymentService paymentService, IRentalService rentalService)
         {
-            _context = context;
-            _logger = logger;
+            _paymentService = paymentService;
+            _rentalService = rentalService;
         }
 
         // GET: Payments
@@ -27,42 +27,9 @@ namespace CarRentalSystem.Controllers
             ViewData["StartDate"] = startDate;
             ViewData["EndDate"] = endDate;
 
-            var payments = _context.Payments
-                .Include(p => p.Rental)
-                    .ThenInclude(r => r!.Client)
-                .Include(p => p.Rental)
-                    .ThenInclude(r => r!.Car!.Model!.Brand)
-                .Include(p => p.Rental)
-                    .ThenInclude(r => r!.Employee)
-                .AsQueryable();
+            var payments = await _paymentService.SearchPaymentsAsync(rentalId, status, method, startDate, endDate);
 
-            // Apply filters
-            if (rentalId.HasValue)
-            {
-                payments = payments.Where(p => p.RentalId == rentalId);
-            }
-
-            if (status.HasValue)
-            {
-                payments = payments.Where(p => p.Status == status);
-            }
-
-            if (method.HasValue)
-            {
-                payments = payments.Where(p => p.PaymentMethod == method);
-            }
-
-            if (startDate.HasValue)
-            {
-                payments = payments.Where(p => p.PaymentDate >= startDate);
-            }
-
-            if (endDate.HasValue)
-            {
-                payments = payments.Where(p => p.PaymentDate <= endDate);
-            }
-
-            return View(await payments.OrderByDescending(p => p.PaymentDate).ToListAsync());
+            return View(payments);
         }
 
         // GET: Payments/Details/5
@@ -73,14 +40,7 @@ namespace CarRentalSystem.Controllers
                 return NotFound();
             }
 
-            var payment = await _context.Payments
-                .Include(p => p.Rental)
-                    .ThenInclude(r => r!.Client)
-                .Include(p => p.Rental)
-                    .ThenInclude(r => r!.Car!.Model!.Brand)
-                .Include(p => p.Rental)
-                    .ThenInclude(r => r!.Employee)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var payment = await _paymentService.GetPaymentWithDetailsAsync(id.Value);
 
             if (payment == null)
             {
@@ -95,11 +55,7 @@ namespace CarRentalSystem.Controllers
         {
             if (rentalId.HasValue)
             {
-                var rental = await _context.Rentals
-                    .Include(r => r.Client)
-                    .Include(r => r.Car!.Model!.Brand)
-                    .Include(r => r.Payments)
-                    .FirstOrDefaultAsync(r => r.Id == rentalId);
+                var rental = await _rentalService.GetRentalWithDetailsAsync(rentalId.Value);
 
                 if (rental == null)
                 {
@@ -113,15 +69,8 @@ namespace CarRentalSystem.Controllers
             else
             {
                 // Load all active rentals for dropdown
-                ViewBag.Rentals = new SelectList(
-                    await _context.Rentals
-                        .Include(r => r.Client)
-                        .Include(r => r.Car!.Model!.Brand)
-                        .Where(r => r.Status == RentalStatus.Active || r.Status == RentalStatus.Reserved)
-                        .OrderByDescending(r => r.RentalDate)
-                        .ToListAsync(),
-                    "Id",
-                    "Id");
+                var rentals = await _rentalService.SearchRentalsAsync(RentalStatus.Active, null, null, null, null);
+                ViewBag.Rentals = new SelectList(rentals, "Id", "Id");
             }
 
             return View();
@@ -135,7 +84,7 @@ namespace CarRentalSystem.Controllers
             if (ModelState.IsValid)
             {
                 // Validate rental exists
-                var rental = await _context.Rentals.FindAsync(payment.RentalId);
+                var rental = await _rentalService.GetRentalByIdAsync(payment.RentalId);
                 if (rental == null)
                 {
                     ModelState.AddModelError("RentalId", "Invalid rental selected.");
@@ -151,10 +100,7 @@ namespace CarRentalSystem.Controllers
                     return View(payment);
                 }
 
-                _context.Add(payment);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation($"New payment created: ID {payment.Id}, Rental {payment.RentalId}, Amount {payment.Amount:C}");
+                await _paymentService.CreatePaymentAsync(payment);
                 TempData["SuccessMessage"] = $"Payment of {payment.Amount:C} has been successfully recorded.";
 
                 return RedirectToAction(nameof(Details), new { id = payment.Id });
@@ -172,12 +118,7 @@ namespace CarRentalSystem.Controllers
                 return NotFound();
             }
 
-            var payment = await _context.Payments
-                .Include(p => p.Rental)
-                    .ThenInclude(r => r!.Client)
-                .Include(p => p.Rental)
-                    .ThenInclude(r => r!.Car!.Model!.Brand)
-                .FirstOrDefaultAsync(p => p.Id == id);
+            var payment = await _paymentService.GetPaymentWithDetailsAsync(id.Value);
 
             if (payment == null)
             {
@@ -200,44 +141,21 @@ namespace CarRentalSystem.Controllers
 
             if (ModelState.IsValid)
             {
-                try
+                // Validate amount
+                if (payment.Amount <= 0)
                 {
-                    // Validate amount
-                    if (payment.Amount <= 0)
-                    {
-                        ModelState.AddModelError("Amount", "Amount must be greater than zero.");
-                        var rental = await _context.Rentals
-                            .Include(r => r.Client)
-                            .Include(r => r.Car!.Model!.Brand)
-                            .FirstOrDefaultAsync(r => r.Id == payment.RentalId);
-                        ViewBag.Rental = rental;
-                        return View(payment);
-                    }
-
-                    _context.Update(payment);
-                    await _context.SaveChangesAsync();
-
-                    _logger.LogInformation($"Payment updated: ID {payment.Id}, Status {payment.Status}");
-                    TempData["SuccessMessage"] = "Payment has been successfully updated.";
+                    ModelState.AddModelError("Amount", "Amount must be greater than zero.");
+                    var rental = await _rentalService.GetRentalWithDetailsAsync(payment.RentalId);
+                    ViewBag.Rental = rental;
+                    return View(payment);
                 }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!PaymentExists(payment.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+
+                await _paymentService.UpdatePaymentAsync(payment);
+                TempData["SuccessMessage"] = "Payment has been successfully updated.";
                 return RedirectToAction(nameof(Details), new { id = payment.Id });
             }
 
-            var rentalData = await _context.Rentals
-                .Include(r => r.Client)
-                .Include(r => r.Car!.Model!.Brand)
-                .FirstOrDefaultAsync(r => r.Id == payment.RentalId);
+            var rentalData = await _rentalService.GetRentalWithDetailsAsync(payment.RentalId);
             ViewBag.Rental = rentalData;
             return View(payment);
         }
@@ -246,45 +164,27 @@ namespace CarRentalSystem.Controllers
         [HttpGet]
         public async Task<JsonResult> GetRentalInfo(int rentalId)
         {
-            var rental = await _context.Rentals
-                .Include(r => r.Client)
-                .Include(r => r.Car!.Model!.Brand)
-                .Include(r => r.Payments)
-                .FirstOrDefaultAsync(r => r.Id == rentalId);
+            var paymentInfo = await _paymentService.GetRentalPaymentInfoAsync(rentalId);
 
-            if (rental == null)
+            if (paymentInfo == null)
             {
                 return Json(new { success = false, message = "Rental not found" });
             }
 
-            var totalPaid = rental.Payments?
-                .Where(p => p.Status == PaymentStatus.Completed)
-                .Sum(p => p.Amount) ?? 0;
-
-            // Calculate rental duration and suggested amount
-            var rentalDays = rental.ReturnDate.HasValue
-                ? (rental.ReturnDate.Value - rental.RentalDate).Days
-                : (DateTime.Now - rental.RentalDate).Days;
-
-            if (rentalDays < 1) rentalDays = 1;
-
-            var totalCost = rental.Car?.DailyPrice * rentalDays ?? 0;
-            var remainingAmount = totalCost - totalPaid;
-
             return Json(new
             {
                 success = true,
-                clientName = $"{rental.Client?.FirstName} {rental.Client?.LastName}",
-                carInfo = $"{rental.Car?.Model?.Brand?.BrandName} {rental.Car?.Model?.ModelName}",
-                registrationNumber = rental.Car?.RegistrationNumber,
-                rentalDate = rental.RentalDate.ToString("yyyy-MM-dd"),
-                returnDate = rental.ReturnDate?.ToString("yyyy-MM-dd"),
-                dailyPrice = rental.Car?.DailyPrice,
-                rentalDays = rentalDays,
-                totalCost = totalCost,
-                totalPaid = totalPaid,
-                remainingAmount = Math.Max(0, remainingAmount),
-                status = rental.Status.ToString()
+                clientName = paymentInfo.ClientName,
+                carInfo = paymentInfo.CarInfo,
+                registrationNumber = paymentInfo.RegistrationNumber,
+                rentalDate = paymentInfo.RentalDate,
+                returnDate = paymentInfo.ReturnDate,
+                dailyPrice = paymentInfo.DailyPrice,
+                rentalDays = paymentInfo.RentalDays,
+                totalCost = paymentInfo.TotalCost,
+                totalPaid = paymentInfo.TotalPaid,
+                remainingAmount = paymentInfo.RemainingAmount,
+                status = paymentInfo.Status
             });
         }
 
@@ -292,32 +192,15 @@ namespace CarRentalSystem.Controllers
         {
             if (rentalId.HasValue)
             {
-                var rental = await _context.Rentals
-                    .Include(r => r.Client)
-                    .Include(r => r.Car!.Model!.Brand)
-                    .Include(r => r.Payments)
-                    .FirstOrDefaultAsync(r => r.Id == rentalId);
-
+                var rental = await _rentalService.GetRentalWithDetailsAsync(rentalId.Value);
                 ViewBag.Rental = rental;
                 ViewBag.RentalId = rentalId;
             }
             else
             {
-                ViewBag.Rentals = new SelectList(
-                    await _context.Rentals
-                        .Include(r => r.Client)
-                        .Include(r => r.Car!.Model!.Brand)
-                        .Where(r => r.Status == RentalStatus.Active || r.Status == RentalStatus.Reserved)
-                        .OrderByDescending(r => r.RentalDate)
-                        .ToListAsync(),
-                    "Id",
-                    "Id");
+                var rentals = await _rentalService.SearchRentalsAsync(RentalStatus.Active, null, null, null, null);
+                ViewBag.Rentals = new SelectList(rentals, "Id", "Id");
             }
-        }
-
-        private bool PaymentExists(int id)
-        {
-            return _context.Payments.Any(e => e.Id == id);
         }
     }
 }
