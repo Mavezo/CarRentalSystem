@@ -557,7 +557,14 @@ CarRentalSystem/
 │       ├── PaymentService.cs
 │       └── DashboardService.cs
 │
-├── ViewModels/              # View Models for UI
+├── ViewModels/              # View Models and Form Models for UI
+│   ├── BrandFormModel.cs
+│   ├── VehicleModelFormModel.cs
+│   ├── CarFormModel.cs
+│   ├── ClientFormModel.cs
+│   ├── EmployeeFormModel.cs
+│   ├── RentalFormModel.cs
+│   ├── PaymentFormModel.cs
 │   └── DashboardViewModel.cs
 │
 ├── Middleware/              # Custom Middleware
@@ -588,6 +595,48 @@ CarRentalSystem/
 ├── README.md               # This file
 └── DEVELOPER_GUIDE.md      # Service Usage Guide
 ```
+
+---
+
+## Form Models
+
+The application uses dedicated FormModels in the `ViewModels/` folder to separate UI form input from persistence entities. These models are used by create and edit pages to bind user input, apply validation attributes, and convert validated form data into domain entities through `ToEntity()` methods.
+
+### Purpose
+
+- Keep Razor Pages form binding separate from EF Core entity models
+- Centralize UI-level validation with Data Annotations
+- Provide safe conversion from form input to domain entities
+- Reuse the same model shape for create and edit workflows
+- Keep controller/page logic cleaner by moving mapping logic into the form model
+
+### Available FormModels
+
+| FormModel | Entity | Main Responsibility |
+|-----------|--------|---------------------|
+| `BrandFormModel` | `Brand` | Handles brand details such as name, country, body type, production year, and transmission |
+| `VehicleModelFormModel` | `Model` | Handles vehicle model creation and association with a brand |
+| `CarFormModel` | `Car` | Handles car inventory data, registration number, mileage, status, price, and location |
+| `ClientFormModel` | `Client` | Handles client registration data, including PESEL, contact details, and address fields |
+| `EmployeeFormModel` | `Employee` | Handles employee profile data, position, hire date, salary, and phone number |
+| `RentalFormModel` | `Rental` | Handles rental creation and updates, including car, client, employee, dates, and status |
+| `PaymentFormModel` | `Payment` | Handles payment data, amount, payment date, method, and status |
+
+### Validation Rules
+
+FormModels use `System.ComponentModel.DataAnnotations` to validate user input before data reaches the service and database layers.
+
+Examples of validation covered by the current FormModels:
+
+- Required fields for names, emails, identifiers, and payment methods
+- Maximum length validation for brand names, model names, registration numbers, positions, and other text fields
+- Range validation for year, mileage, salary, daily price, and payment amount
+- Format validation for email addresses, phone numbers, PESEL, and postal codes
+- Date and currency display hints through `DataType` attributes
+
+### Mapping Pattern
+
+Each FormModel exposes a `ToEntity()` method that creates the corresponding domain entity after validation succeeds. This keeps form-specific concerns in the presentation layer while allowing services to continue working with entities such as `Brand`, `Car`, `Client`, `Rental`, and `Payment`.
 
 ---
 
